@@ -1,0 +1,5 @@
+# dist/ is committed deliberately — GitHub Pages serves the demo straight off main.
+node_modules/
+.DS_Store
+*.log
+.playwright-mcp/

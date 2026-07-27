@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Timeline Engine — @magic-spells</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-deep: #06090d;
+      --bg-card: #0c1015;
+      --bg-card-hover: #10151b;
+      --border: #182029;
+      --border-accent: #23303b;
+      --teal: #5ecabb;
+      --teal-dim: #37857a;
+      --teal-glow: rgba(94, 202, 187, 0.12);
+      --cool: #86b5e8;
+      --amber: #d9a441;
+      --rose: #e08a6f;
+      --cream: #e6eae6;
+      --cream-dim: #97a19c;
+      --text: #c6cdc8;
+      --text-dim: #7c857f;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'Outfit', system-ui, sans-serif;
+      --lane-name: 104px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background: var(--bg-deep); }
+
+    body {
+      font-family: var(--font-body);
+      font-weight: 300;
+      color: var(--text);
+      background: var(--bg-deep);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Noise overlay ---- */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.022;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px;
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+      position: relative;
+      /* Clips the oversized radial glow below, so the page never scrolls sideways. */
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5.5rem 2rem 3rem;
+      text-align: center;
+      min-height: 72vh;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 900px;
+      max-width: 130vw;
+      background: radial-gradient(ellipse, var(--teal-glow) 0%, transparent 68%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      position: relative;
+      font-family: var(--font-body);
+      font-weight: 400;
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--teal);
+      border: 1px solid var(--border-accent);
+      padding: 0.4em 1.4em;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      transition: border-color 0.3s ease, color 0.3s ease;
+    }
+    .hero-badge:hover { border-color: var(--teal-dim); color: var(--cream); }
+
+    /* ---- Dependency pills ----
+       Same pill language as .hero-badge but deliberately quieter — mono, dimmer,
+       plain --border — so "this is built on our own packages" reads without
+       competing with the title directly beneath it. The scope is greyed inside
+       each pill so the eye lands on the package name while the full specifier
+       stays copyable. Wraps to its own lines on narrow screens. */
+    .hero-deps {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      max-width: 760px;
+      margin-bottom: 2.5rem;
+    }
+    .hero-deps-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .dep-badge {
+      font-family: 'Courier New', monospace;
+      font-size: 0.68rem;
+      color: var(--cream-dim);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.45em 1.05em;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: border-color 0.3s ease, color 0.3s ease;
+    }
+    .dep-badge:hover { border-color: var(--teal-dim); color: var(--teal); }
+    .dep-badge .dep-scope { color: var(--text-dim); }
+    .dep-badge:hover .dep-scope { color: var(--teal-dim); }
+
+    .hero h1 {
+      position: relative;
+      font-family: var(--font-display);
+      font-weight: 300;
+      font-size: clamp(2.8rem, 9vw, 7rem);
+      line-height: 1.02;
+      color: var(--cream);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.75rem;
+    }
+    .hero h1 .line2 { font-style: italic; color: var(--teal); }
+
+    .hero p {
+      position: relative;
+      max-width: 580px;
+      font-size: 1.02rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 0.25s;
+    }
+    .hero p + p { margin-top: 1rem; animation-delay: 0.45s; }
+    .hero p em { color: var(--cream-dim); font-style: italic; }
+
+    .scroll-hint {
+      position: relative;
+      margin-top: 2.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 0.7s;
+    }
+    .scroll-hint::after {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 34px;
+      margin: 0.9rem auto 0;
+      background: linear-gradient(180deg, var(--teal-dim), transparent);
+    }
+
+    /* ---- Install banner ---- */
+    .install-banner {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+      margin: 0 auto 3.5rem;
+      max-width: 680px;
+      padding: 0 1.5rem;
+    }
+    .install-item { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+    .install-label {
+      font-size: 0.65rem; font-weight: 400; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--text-dim);
+    }
+    .install-value {
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem; color: var(--cream);
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.5em 1.2em;
+      user-select: all; cursor: copy;
+      transition: border-color 0.3s ease;
+    }
+    .install-value:hover { border-color: var(--teal-dim); }
+    .install-size { font-family: 'Courier New', monospace; font-size: 0.88rem; color: var(--teal); padding: 0.5em 0; }
+    .install-item-size { flex-basis: 100%; }
+
+    /* ---- Sections ---- */
+    .demos {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem 7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.75rem;
+    }
+
+    .demo-section {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      transition: border-color 0.4s ease, background 0.4s ease;
+    }
+    .demo-section:hover { border-color: var(--border-accent); background: var(--bg-card-hover); }
+
+    .demo-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+    .demo-index {
+      font-family: 'Courier New', monospace; font-size: 0.72rem;
+      color: var(--teal-dim); letter-spacing: 0.1em;
+    }
+    .demo-section h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 1.85rem; color: var(--cream); letter-spacing: -0.01em;
+    }
+    .demo-tag {
+      font-family: 'Courier New', monospace; font-size: 0.62rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--teal); border: 1px solid var(--border-accent);
+      border-radius: 100px; padding: 0.25em 0.9em;
+    }
+    .demo-tag.trigger { color: var(--amber); }
+    .demo-tag.clock { color: var(--cool); }
+    .demo-desc {
+      font-size: 0.98rem; color: var(--text-dim); line-height: 1.6;
+      margin-bottom: 1.75rem; max-width: 640px;
+    }
+    .demo-desc em { color: var(--cream-dim); font-style: italic; }
+    .demo-desc code {
+      font-family: 'Courier New', monospace; font-size: 0.88em; color: var(--cream-dim);
+    }
+
+    /* ---- Stage ---- */
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.012) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* ---- Scrub scaffolding ---- */
+    .scrub-track { position: relative; }
+    .scrub-track.pinned { height: 200vh; }
+    .scrub-sticky { position: sticky; top: 15vh; }
+    .scrub-stage { height: 62vh; min-height: 330px; }
+
+    .meter {
+      display: flex; align-items: center; gap: 0.9rem;
+      margin-top: 1.1rem;
+    }
+    .meter-label {
+      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-dim); white-space: nowrap;
+    }
+    .meter-track {
+      flex: 1; height: 2px; background: var(--border-accent);
+      border-radius: 1px; overflow: hidden;
+    }
+    .meter-fill {
+      display: block; width: 100%; height: 100%;
+      background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+      transform: scaleX(0); transform-origin: left center;
+    }
+    .meter-num {
+      font-family: 'Courier New', monospace; font-size: 0.76rem;
+      color: var(--teal); min-width: 46px; text-align: right;
+    }
+
+    /* ---- Controls / buttons ---- */
+    .controls { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; align-items: center; }
+
+    .btn {
+      font-family: var(--font-body); font-weight: 400;
+      font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--cream); background: transparent;
+      border: 1px solid var(--border-accent);
+      padding: 0.6em 1.6em; border-radius: 100px;
+      cursor: pointer; transition: all 0.3s ease;
+    }
+    .btn:hover { border-color: var(--teal-dim); color: var(--teal); box-shadow: 0 0 20px rgba(94,202,187,0.1); }
+    .btn.active { border-color: var(--teal); color: var(--teal); background: rgba(94,202,187,0.06); }
+    .btn.small { font-size: 0.64rem; padding: 0.45em 1.1em; }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none; flex: 1;
+      height: 2px; background: var(--border-accent); border-radius: 1px;
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--teal); border: none;
+      box-shadow: 0 0 20px rgba(94,202,187,0.35);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--teal); border: none;
+      box-shadow: 0 0 20px rgba(94,202,187,0.35);
+    }
+
+    /* ---- Code aside ---- */
+    .code-aside {
+      margin-top: 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .code-aside summary {
+      cursor: pointer; list-style: none;
+      font-size: 0.65rem; font-weight: 400; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--text-dim);
+      padding: 0.9rem 1.25rem;
+      transition: color 0.25s ease;
+      user-select: none;
+    }
+    .code-aside summary::-webkit-details-marker { display: none; }
+    .code-aside summary::before { content: '▸ '; color: var(--teal-dim); }
+    .code-aside[open] summary::before { content: '▾ '; }
+    .code-aside summary:hover { color: var(--cream-dim); }
+    .code-aside pre { margin: 0; padding: 0 1.25rem 1.25rem; overflow-x: auto; }
+    .code-aside code {
+      font-family: 'Courier New', monospace; font-size: 0.76rem;
+      line-height: 1.7; color: var(--cream-dim); white-space: pre;
+    }
+    .code-aside code .kw { color: var(--teal); }
+    .code-aside code .fn { color: #7fe0cf; }
+    .code-aside code .str { color: #cf9d6a; }
+    .code-aside code .num { color: #e0836f; }
+    .code-aside code .cm { color: var(--text-dim); }
+    .code-aside code .prop { color: var(--cool); }
+
+    /* ---- 01 Hero: an orbital system on one time axis ---- */
+    .hero-stage {
+      background:
+        radial-gradient(ellipse 90% 60% at 50% 50%, rgba(94,202,187,0.06), transparent 66%),
+        radial-gradient(ellipse 55% 40% at 20% 78%, rgba(134,181,232,0.06), transparent 70%),
+        linear-gradient(180deg, #04070b 0%, #070c12 55%, #090f16 100%);
+    }
+
+    /* Starfield. Dots are placed once from JS and never move — only opacity and
+       scale are tweened, so the twinkle stays a plain numeric lerp. */
+    .star-dot {
+      position: absolute;
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: var(--cream);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .star-dot.big { width: 3px; height: 3px; box-shadow: 0 0 5px rgba(230,234,230,0.8); }
+
+    .hero-sun {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 58px; height: 58px;
+      margin: -29px 0 0 -29px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 32%, #fff8e2 0%, var(--amber) 44%, #9d6717 100%);
+      box-shadow: 0 0 34px rgba(217,164,65,0.6), 0 0 90px rgba(217,164,65,0.2);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* Each orbit is a centred circle whose planet is pinned to its top edge, so
+       rotating the ring carries the planet around it — the clip animates a
+       single rotate() and nothing else. */
+    .orbit {
+      position: absolute;
+      left: 50%; top: 50%;
+      border-radius: 50%;
+      border: 1px solid rgba(94,202,187,0.13);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .orbit-1 { width: 154px; height: 154px; margin: -77px 0 0 -77px; }
+    .orbit-2 { width: 248px; height: 248px; margin: -124px 0 0 -124px; }
+    .orbit-3 { width: 344px; height: 344px; margin: -172px 0 0 -172px; }
+
+    .planet { position: absolute; left: 50%; top: 0; border-radius: 50%; }
+    .orbit-1 .planet {
+      width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px;
+      background: radial-gradient(circle at 34% 30%, #d9fff7, var(--teal) 45%, #1d6459 100%);
+      box-shadow: 0 0 12px rgba(94,202,187,0.7);
+    }
+    .orbit-2 .planet {
+      width: 18px; height: 18px; margin: -9px 0 0 -9px;
+      background: radial-gradient(circle at 34% 30%, #ffd9c6, var(--rose) 46%, #8a4530 100%);
+      box-shadow: 0 0 14px rgba(224,138,111,0.55);
+    }
+    .orbit-3 .planet {
+      width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px;
+      background: radial-gradient(circle at 34% 30%, #dcecff, var(--cool) 46%, #3d6690 100%);
+      box-shadow: 0 0 12px rgba(134,181,232,0.6);
+    }
+
+    /* The tail points left, so the comet's rotate() matches its direction of
+       travel — 25deg for the +640/+300 path the clip tweens. */
+    .hero-comet {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 4px; height: 4px;
+      margin: -2px 0 0 -2px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 10px 2px rgba(255,255,255,0.9);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .hero-comet::after {
+      content: '';
+      position: absolute;
+      right: 3px; top: 50%;
+      margin-top: -1px;
+      width: 130px; height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(270deg, rgba(255,255,255,0.8), transparent);
+    }
+
+    .hero-headline {
+      position: absolute;
+      left: 0; right: 0; bottom: 9%;
+      text-align: center;
+      font-family: var(--font-display);
+      font-weight: 400;
+      font-size: clamp(1.4rem, 3.4vw, 2.3rem);
+      color: var(--cream);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .hero-headline i { font-style: italic; color: var(--teal); }
+
+    /* ---- Clip ruler ---- */
+    .ruler-head-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin: 1.4rem 0 0.6rem;
+    }
+    .ruler-title {
+      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim);
+    }
+    .ruler-time { font-family: 'Courier New', monospace; font-size: 0.78rem; color: var(--teal); }
+    .ruler {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      background: rgba(0,0,0,0.3);
+    }
+    .lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 22px; }
+    .lane-name {
+      font-family: 'Courier New', monospace; font-size: 0.64rem;
+      color: var(--cream-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lane-track { position: relative; height: 8px; background: rgba(255,255,255,0.03); border-radius: 4px; }
+    .lane-bar {
+      position: absolute; top: 0; bottom: 0;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+      opacity: 0.75;
+    }
+    .ruler-overlay {
+      position: absolute;
+      top: 0.55rem; bottom: 0.55rem;
+      left: calc(0.9rem + var(--lane-name) + 0.6rem);
+      right: 0.9rem;
+      pointer-events: none;
+    }
+    .ruler-playhead {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      width: 1px; background: var(--cream);
+      box-shadow: 0 0 10px rgba(230,234,230,0.7);
+    }
+    .ruler-playhead::before {
+      content: ''; position: absolute; top: -4px; left: -3px;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--cream);
+    }
+
+    /* ---- 02 Stagger cards ---- */
+    .stagger-stage {
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(0.4rem, 1.4vw, 0.9rem);
+      padding: 1.5rem;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(94,202,187,0.05), transparent 62%),
+        linear-gradient(135deg, rgba(255,255,255,0.012), rgba(255,255,255,0.03));
+    }
+    .stagger-card {
+      flex: 0 1 116px;
+      aspect-ratio: 2 / 3;
+      border-radius: 10px;
+      border: 1px solid var(--border-accent);
+      background: linear-gradient(160deg, rgba(94,202,187,0.14), rgba(10,16,22,0.92));
+      box-shadow: 0 14px 30px rgba(0,0,0,0.42);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.35rem;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .stagger-card b {
+      font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; color: var(--cream);
+    }
+    .stagger-card span {
+      font-family: 'Courier New', monospace; font-size: 0.58rem; color: var(--teal); letter-spacing: 0.04em;
+    }
+
+    /* ---- 03 Smoothing ---- */
+    .smooth-stage {
+      display: grid; grid-template-columns: 1fr 1fr;
+      background:
+        radial-gradient(ellipse at 50% 100%, rgba(94,202,187,0.06), transparent 55%),
+        linear-gradient(135deg, rgba(255,255,255,0.012), rgba(255,255,255,0.03));
+    }
+    .smooth-cell {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1rem; padding: 1.25rem;
+    }
+    .smooth-cell + .smooth-cell { border-left: 1px solid var(--border); }
+    .gauge { position: relative; width: 100%; max-width: 250px; aspect-ratio: 2 / 1; }
+    .gauge-arc {
+      position: absolute; inset: 0;
+      border: 1px solid var(--border-accent);
+      border-bottom: none;
+      border-radius: 999px 999px 0 0;
+    }
+    .gauge-arc::after {
+      content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
+    }
+    .needle {
+      position: absolute;
+      left: 50%; bottom: 0;
+      width: 2px; height: 84%;
+      margin-left: -1px;
+      transform-origin: bottom center;
+      transform: rotate(-62deg);
+      background: linear-gradient(180deg, var(--teal), rgba(94,202,187,0.15));
+      border-radius: 2px;
+      will-change: transform;
+    }
+    .needle.alt { background: linear-gradient(180deg, var(--amber), rgba(217,164,65,0.15)); }
+    .gauge-hub {
+      position: absolute; left: 50%; bottom: -5px;
+      width: 10px; height: 10px; margin-left: -5px;
+      border-radius: 50%; background: var(--cream);
+      box-shadow: 0 0 12px rgba(230,234,230,0.5);
+    }
+    .smooth-cap { text-align: center; }
+    .smooth-cap .t { font-family: var(--font-display); font-size: 1.45rem; color: var(--cream); display: block; }
+    .smooth-cap .s { font-family: 'Courier New', monospace; font-size: 0.68rem; color: var(--text-dim); }
+    .smooth-val { font-family: 'Courier New', monospace; font-size: 1.35rem; color: var(--teal); }
+    .smooth-val.alt { color: var(--amber); }
+
+    /* ---- 04 View trigger ---- */
+    .pop-stage {
+      height: 280px;
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(0.6rem, 2.4vw, 1.6rem);
+      background:
+        radial-gradient(ellipse at 50% 92%, rgba(217,164,65,0.08), transparent 48%),
+        linear-gradient(180deg, #080c11 0%, #0c1219 100%);
+    }
+    .pop-bubble {
+      width: clamp(44px, 9vw, 68px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, #ffffff 0%, var(--teal) 40%, #1f6b62 100%);
+      box-shadow: 0 0 22px rgba(94,202,187,0.35), inset -6px -8px 14px rgba(4,34,31,0.4);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .pop-bubble:nth-child(even) {
+      background: radial-gradient(circle at 34% 28%, #ffffff 0%, var(--cool) 40%, #3b6191 100%);
+      box-shadow: 0 0 22px rgba(134,181,232,0.3), inset -6px -8px 14px rgba(8,22,40,0.4);
+    }
+    .status-line {
+      display: flex; align-items: center; gap: 0.8rem;
+      font-family: 'Courier New', monospace; font-size: 0.78rem;
+      color: var(--cream-dim); margin-top: 1.1rem; min-height: 1.4em;
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-dim); transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .status-dot.on { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+
+    /* ---- 05 call() ---- */
+    .fuse-stage {
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(217,164,65,0.06), transparent 58%),
+        linear-gradient(180deg, #080c11 0%, #0c1219 100%);
+    }
+    .fuse-rail {
+      position: absolute;
+      left: 8%; right: 8%; top: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--border-accent) 12%, var(--border-accent) 88%, transparent);
+    }
+    .fuse-mark {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 1px; height: 54px;
+      margin-top: -27px;
+      background: linear-gradient(180deg, transparent, var(--amber), transparent);
+    }
+    .fuse-mark span {
+      position: absolute; top: -26px; left: 10px;
+      font-family: 'Courier New', monospace; font-size: 0.62rem;
+      letter-spacing: 0.1em; color: var(--amber); white-space: nowrap;
+    }
+    .fuse-spark {
+      position: absolute;
+      top: 50%; left: 8%;
+      width: 14px; height: 14px;
+      margin: -7px 0 0 -7px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #fff6e2, var(--amber) 55%, #8a5f14 100%);
+      box-shadow: 0 0 14px rgba(217,164,65,0.9), 0 0 40px rgba(217,164,65,0.35);
+      will-change: left;
+    }
+    .fuse-flash {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 260px; height: 260px;
+      margin: -130px 0 0 -130px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(217,164,65,0.30), transparent 64%);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .shard-origin { position: absolute; left: 50%; top: 50%; }
+    .shard {
+      position: absolute;
+      left: 0; top: 0;
+      width: 11px; height: 11px;
+      margin: -5px 0 0 -5px;
+      border-radius: 2px;
+      background: linear-gradient(135deg, var(--amber), var(--rose));
+      box-shadow: 0 0 12px rgba(217,164,65,0.5);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .call-log {
+      list-style: none;
+      margin-top: 1.1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      min-height: 5.4em;
+    }
+    .call-log li { padding: 0.12rem 0; }
+    .call-log li b { color: var(--amber); font-weight: 400; }
+    .call-log li i { color: var(--cool); font-style: normal; }
+
+    /* ---- 06 Timed playback ---- */
+    .beat-stage {
+      height: 220px;
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: clamp(4px, 1.1vw, 10px);
+      padding: 2.5rem 1.5rem 2rem;
+      background:
+        radial-gradient(ellipse at 50% 100%, rgba(134,181,232,0.07), transparent 55%),
+        linear-gradient(135deg, rgba(255,255,255,0.012), rgba(255,255,255,0.03));
+    }
+    .beat {
+      width: clamp(9px, 1.8vw, 16px);
+      height: 100%;
+      border-radius: 4px;
+      transform-origin: bottom center;
+      transform: scaleY(0.12);
+      opacity: 0.3;
+      background: linear-gradient(180deg, var(--teal), #2b6f66);
+      will-change: transform, opacity;
+    }
+    .transport { display: flex; align-items: center; gap: 0.9rem; margin-top: 1.25rem; flex-wrap: wrap; }
+    .transport-bar {
+      flex: 1 1 200px; height: 3px; background: var(--border-accent);
+      border-radius: 2px; overflow: hidden;
+    }
+    .transport-fill {
+      display: block; width: 100%; height: 100%;
+      background: linear-gradient(90deg, var(--cool), var(--teal));
+      transform: scaleX(0); transform-origin: left center;
+    }
+    .transport-read {
+      font-family: 'Courier New', monospace; font-size: 0.75rem;
+      color: var(--cool); min-width: 118px; text-align: right;
+    }
+    .scrub-row { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+    .scrub-row .slider-label {
+      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-dim); white-space: nowrap;
+    }
+
+    /* ---- Split note ---- */
+    .split-note {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .split-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem;
+      background: rgba(0,0,0,0.22);
+    }
+    .split-card h3 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 1.25rem; color: var(--cream); margin-bottom: 0.4rem;
+    }
+    .split-card p { font-size: 0.9rem; line-height: 1.6; color: var(--text-dim); }
+    .split-card code { font-family: 'Courier New', monospace; font-size: 0.86em; color: var(--teal); }
+    .split-card.trigger code { color: var(--amber); }
+
+    /* ---- Footer ---- */
+    .foot {
+      text-align: center; padding: 3rem 1.5rem 5rem;
+      color: var(--text-dim); font-size: 0.85rem;
+    }
+    .foot a { color: var(--teal-dim); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.25s ease; }
+    .foot a:hover { border-color: var(--teal-dim); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- 07 Sigil: hover-scrubbed studio preview ---- */
+    /* The whole panel is the scrub surface — stage and strip both. Cursor X
+       across it maps to the playhead, so there's no separate "handle" to find. */
+    .studio {
+      border: 1px solid var(--border-accent);
+      border-radius: 14px;
+      background: var(--bg-card);
+      overflow: hidden;
+      cursor: ew-resize;
+      touch-action: pan-y;
+    }
+
+    .sigil-stage {
+      position: relative;
+      height: 340px;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 58%, rgba(94,202,187,0.05), transparent 60%),
+        linear-gradient(170deg, rgba(255,255,255,0.014), rgba(0,0,0,0.28));
+    }
+    /* Every stage object is centred by default; clips animate transform on top
+       of that, so each keyframe carries its own translate(-50%,-50%). */
+    .sigil-stage > * { position: absolute; left: 50%; top: 52%; }
+
+    .sig-aura {
+      width: 340px; height: 340px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(94,202,187,0.22), rgba(94,202,187,0.05) 45%, transparent 70%);
+      filter: blur(6px);
+    }
+    .sig-ring, .sig-arc {
+      border-radius: 50%;
+      border: 1px solid transparent;
+    }
+    .sig-ring {
+      width: 226px; height: 226px;
+      border-color: rgba(94,202,187,0.42);
+      box-shadow: 0 0 26px rgba(94,202,187,0.12), inset 0 0 26px rgba(94,202,187,0.07);
+    }
+    .sig-arc {
+      width: 152px; height: 152px;
+      border-top-color: var(--amber);
+      border-right-color: rgba(217,164,65,0.34);
+    }
+
+    /* The wrapper owns the circle placement (a calc() with vars, set once from
+       JS and never animated); the inner <i> is what the clip tweens, so the
+       interpolated transform stays plain numeric tokens. */
+    .sig-rune {
+      transform: translate(calc(-50% + var(--rx)), calc(-50% + var(--ry)));
+    }
+    .sig-rune i {
+      display: grid; place-items: center;
+      width: 30px; height: 30px;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-style: normal;
+      color: var(--cream);
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      background: rgba(10,16,22,0.82);
+    }
+
+    .sig-core {
+      width: 54px; height: 54px; border-radius: 50%;
+      background: radial-gradient(circle at 38% 34%, #cdfff4, var(--teal) 42%, var(--teal-dim) 78%);
+      box-shadow: 0 0 30px rgba(94,202,187,0.5);
+    }
+    /* The call() at 1750 toggles this — a flash, not an animation, so it
+       stays out of the scrubbed path entirely. */
+    .sig-core.flash {
+      box-shadow: 0 0 18px rgba(94,202,187,0.5), 0 0 70px 20px rgba(230,234,230,0.55);
+    }
+
+    .sig-beam {
+      width: 300px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cream), transparent);
+      box-shadow: 0 0 14px rgba(230,234,230,0.6);
+    }
+
+    /* ---- the strip ---- */
+    .studio-strip {
+      position: relative;
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 0.9rem 0.9rem;
+      background: rgba(0,0,0,0.34);
+    }
+    .strip-head {
+      display: flex; align-items: center; gap: 0.7rem;
+      margin: 0 0 0.6rem calc(var(--lane-name) + 0.6rem);
+      font-family: 'Courier New', monospace;
+      font-size: 0.64rem;
+      color: var(--text-dim);
+    }
+    .strip-time { color: var(--cream); }
+    .strip-end { margin-left: auto; }
+
+    /* Who owns the playhead right now — the whole point of the section. */
+    .owner {
+      display: inline-flex; align-items: center; gap: 0.34rem;
+      padding: 0.16rem 0.5rem;
+      border: 1px solid var(--border-accent);
+      border-radius: 999px;
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--cool);
+      transition: color 0.18s, border-color 0.18s;
+    }
+    .owner.is-cursor { color: var(--teal); border-color: var(--teal-dim); }
+
+    .studio-lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 21px; }
+    .studio-lane .lane-name { font-size: 0.62rem; transition: color 0.15s; }
+    .studio-lane.live .lane-name { color: var(--teal); }
+    .studio-lane .lane-track { height: 9px; }
+    .studio-bar {
+      position: absolute; top: 0; bottom: 0;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+      /* Idle = the clip is only holding a fill frame. Live = it's actually
+         interpolating. Same distinction getFrames() makes internally. */
+      opacity: 0.24;
+      transition: opacity 0.14s, box-shadow 0.14s;
+    }
+    .studio-bar.live { opacity: 1; box-shadow: 0 0 12px rgba(94,202,187,0.45); }
+    .studio-bar.accent { background: linear-gradient(90deg, rgba(217,164,65,0.5), var(--amber)); }
+    .studio-bar.accent.live { box-shadow: 0 0 12px rgba(217,164,65,0.45); }
+
+    .strip-overlay {
+      position: absolute;
+      top: 2.1rem; bottom: 0.9rem;
+      left: calc(0.9rem + var(--lane-name) + 0.6rem);
+      right: 0.9rem;
+      pointer-events: none;
+    }
+    .strip-playhead {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      width: 1px; background: var(--cream);
+      box-shadow: 0 0 10px rgba(230,234,230,0.7);
+    }
+    .strip-playhead::before {
+      content: ''; position: absolute; top: -5px; left: -3.5px;
+      width: 8px; height: 8px; border-radius: 2px;
+      background: var(--cream);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 720px) {
+      :root { --lane-name: 78px; }
+      .demo-section { padding: 1.5rem; }
+      .scrub-stage { height: 54vh; min-height: 280px; }
+      .scrub-track.pinned { height: 170vh; }
+      .split-note { grid-template-columns: 1fr; }
+      /* The two gauges only make their point side by side — shrink, don't stack. */
+      .smooth-cell { gap: 0.6rem; padding: 0.75rem; }
+      .smooth-cap .t { font-size: 1.05rem; }
+      .smooth-cap .s { font-size: 0.58rem; }
+      .smooth-val { font-size: 1rem; }
+      /* The outer orbit is 344px — wider than a narrow stage. Shrink the system. */
+      .orbit-1 { width: 112px; height: 112px; margin: -56px 0 0 -56px; }
+      .orbit-2 { width: 182px; height: 182px; margin: -91px 0 0 -91px; }
+      .orbit-3 { width: 252px; height: 252px; margin: -126px 0 0 -126px; }
+      .hero-sun { width: 42px; height: 42px; margin: -21px 0 0 -21px; }
+      .hero-comet::after { width: 90px; }
+      .stagger-stage { padding: 1rem 0.6rem; }
+      .stagger-card { flex: 0 1 34px; border-radius: 7px; }
+      .stagger-card b { font-size: 1rem; }
+      .stagger-card span { display: none; }
+      .pop-stage { height: 220px; }
+      .sigil-stage { height: 260px; }
+      .sig-aura { width: 240px; height: 240px; }
+      .sig-ring { width: 168px; height: 168px; }
+      .sig-arc { width: 112px; height: 112px; }
+      .sig-beam { width: 220px; }
+      .sig-rune { width: 25px; height: 25px; margin: -12.5px 0 0 -12.5px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ======== HERO ======== -->
+  <header class="hero">
+    <a class="hero-badge" href="https://github.com/magic-spells/timeline-engine" target="_blank" rel="noopener">@magic-spells/timeline-engine</a>
+    <div class="hero-deps">
+      <span class="hero-deps-label">Uses</span>
+      <a class="dep-badge" href="https://github.com/magic-spells/animation-engine" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>animation-engine</a>
+      <a class="dep-badge" href="https://github.com/magic-spells/event-emitter" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>event-emitter</a>
+      <a class="dep-badge" href="https://github.com/magic-spells/frame-engine" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>frame-engine</a>
+    </div>
+    <h1>
+      <span class="line1">Timeline</span><br />
+      <span class="line2">Engine</span>
+    </h1>
+    <p>A bunch of frame engines with <em>offset start times</em>. The whole timeline is a pure function of time, so anything can own the playhead — the clock, a scrub position, or the scroll bar.</p>
+    <p>The scrubbed path is bezier and easings only: a spring has no closed-form position-at-time, so it can't be sampled at an arbitrary playhead. <em>Physics lives on the trigger path</em> — fire an animation-engine scene from a timeline position or from the viewport and it plays forward in real time.</p>
+    <div class="scroll-hint">Scroll to scrub</div>
+  </header>
+
+  <!-- ======== INSTALL ======== -->
+  <div class="install-banner">
+    <div class="install-item">
+      <span class="install-label">Install</span>
+      <code class="install-value">npm i @magic-spells/timeline-engine</code>
+    </div>
+    <div class="install-item install-item-size">
+      <span class="install-label">Size (gzip)</span>
+      <span class="install-size">10.3 kB</span>
+    </div>
+  </div>
+
+  <!-- ======== THE SPLIT ======== -->
+  <div class="split-note">
+    <div class="split-card">
+      <h3>Scrub</h3>
+      <p>Deterministic clips — <code>tween()</code>, <code>fromTo()</code>, <code>set()</code> — sampled at any millisecond by <code>seek()</code>, <code>progress()</code> or a <code>scrollDriver</code>. Same time in, same frame out, forwards or backwards.</p>
+    </div>
+    <div class="split-card trigger">
+      <h3>Trigger</h3>
+      <p>Springs, staggers and async chains from <code>@magic-spells/animation-engine</code>, started by <code>tl.call()</code> at a timeline position or by <code>viewTrigger()</code> when a section arrives. They play forward, in real time.</p>
+    </div>
+  </div>
+
+  <!-- ======== DEMOS ======== -->
+  <main class="demos">
+
+    <!-- ---- 01 Hero: offset clips on one axis ---- -->
+    <section class="demo-section" id="sec-hero">
+      <div class="demo-header">
+        <span class="demo-index">01</span>
+        <h2>Clips at offset start times</h2>
+        <span class="demo-tag">scroll · scrub</span>
+      </div>
+      <p class="demo-desc">A star, three orbits, a comet and a staggered sky — seven clips on one time axis, each with its own <em>at</em> and <em>duration</em>, deliberately overlapping. A <code>scrollDriver</code> maps this stage's trip through the viewport onto the playhead, so scrolling is scrubbing: run it backwards and the planets orbit backwards. The ruler underneath is drawn from the very same clip list; the white line is the live playhead.</p>
+
+      <div class="scrub-track" id="hero-track">
+        <div class="stage scrub-stage hero-stage" id="hero-stage">
+          <div class="hero-sun" id="hero-sun"></div>
+          <div class="orbit orbit-1" id="orbit-1"><i class="planet"></i></div>
+          <div class="orbit orbit-2" id="orbit-2"><i class="planet"></i></div>
+          <div class="orbit orbit-3" id="orbit-3"><i class="planet"></i></div>
+          <div class="hero-comet" id="hero-comet"></div>
+          <h3 class="hero-headline" id="hero-headline">one axis, <i>many starts</i></h3>
+        </div>
+      </div>
+
+      <div class="ruler-head-row">
+        <span class="ruler-title">clips · playhead</span>
+        <span class="ruler-time" id="hero-time">0 ms</span>
+      </div>
+      <div class="ruler" id="hero-ruler">
+        <div id="hero-lanes"></div>
+        <div class="ruler-overlay"><i class="ruler-playhead" id="hero-playhead"></i></div>
+      </div>
+
+      <div class="meter">
+        <span class="meter-label">driver progress</span>
+        <span class="meter-track"><i class="meter-fill"></i></span>
+        <span class="meter-num">0.000</span>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timeline()</summary>
+        <pre><code><span class="cm">// Each orbit is a centred ring with its planet pinned to the top edge, so the</span>
+<span class="cm">// clip animates one rotate() and the planet is carried around. The middle key</span>
+<span class="cm">// is sparse — only opacity — so the rotation interpolates straight through it.</span>
+<span class="kw">const</span> <span class="fn">orbitFrames</span> = (from, to) =&gt; ({
+  <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">`rotate(${from}deg)`</span> },
+  <span class="num">22</span>:  { <span class="prop">opacity</span>: <span class="str">'1'</span> },
+  <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">`rotate(${to}deg)`</span> },
+});
+
+<span class="cm">// One list drives both the timeline and the ruler drawn under the stage.</span>
+<span class="kw">const</span> heroClips = [
+  <span class="cm">// Sized so the LAST star lands on the timeline's own end: the 34th element</span>
+  <span class="cm">// starts at 33 * 26 = 858, so 858 + 1340 ≈ 2200. Three twinkle cycles per star,</span>
+  <span class="cm">// staggered across 34 of them, means the field never settles — and because it's</span>
+  <span class="cm">// all keyframed, it scrubs backwards just as happily as forwards.</span>
+  { <span class="prop">name</span>: <span class="str">'starfield'</span>, <span class="prop">target</span>: <span class="str">'.star-dot'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">1340</span>, <span class="prop">easing</span>: <span class="str">'linear'</span>, <span class="prop">stagger</span>: <span class="num">26</span>,
+    <span class="prop">keyframes</span>: { <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>,    <span class="prop">transform</span>: <span class="str">'scale(0.3)'</span> },
+                 <span class="num">18</span>:  { <span class="prop">opacity</span>: <span class="str">'1'</span>,    <span class="prop">transform</span>: <span class="str">'scale(1)'</span> },
+                 <span class="num">34</span>:  { <span class="prop">opacity</span>: <span class="str">'0.3'</span>,  <span class="prop">transform</span>: <span class="str">'scale(0.72)'</span> },
+                 <span class="num">50</span>:  { <span class="prop">opacity</span>: <span class="str">'0.95'</span>, <span class="prop">transform</span>: <span class="str">'scale(1)'</span> },
+                 <span class="num">66</span>:  { <span class="prop">opacity</span>: <span class="str">'0.35'</span>, <span class="prop">transform</span>: <span class="str">'scale(0.78)'</span> },
+                 <span class="num">82</span>:  { <span class="prop">opacity</span>: <span class="str">'1'</span>,    <span class="prop">transform</span>: <span class="str">'scale(1)'</span> },
+                 <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'0.7'</span>,  <span class="prop">transform</span>: <span class="str">'scale(0.92)'</span> } } },
+
+  { <span class="prop">name</span>: <span class="str">'sun'</span>, <span class="prop">target</span>: <span class="str">'#hero-sun'</span>, <span class="prop">at</span>: <span class="num">200</span>, <span class="prop">duration</span>: <span class="num">900</span>, <span class="prop">easing</span>: <span class="str">'back-out'</span>,
+    <span class="prop">keyframes</span>: { <span class="num">0</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'scale(0)'</span> },
+                 <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'scale(1)'</span> } } },
+
+  { <span class="prop">name</span>: <span class="str">'orbit i'</span>,   <span class="prop">target</span>: <span class="str">'#orbit-1'</span>, <span class="prop">at</span>: <span class="num">400</span>, <span class="prop">duration</span>: <span class="num">1500</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: <span class="fn">orbitFrames</span>(<span class="num">-40</span>, <span class="num">185</span>) },
+  { <span class="prop">name</span>: <span class="str">'orbit ii'</span>,  <span class="prop">target</span>: <span class="str">'#orbit-2'</span>, <span class="prop">at</span>: <span class="num">550</span>, <span class="prop">duration</span>: <span class="num">1500</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: <span class="fn">orbitFrames</span>(<span class="num">30</span>, <span class="num">-145</span>) },
+  { <span class="prop">name</span>: <span class="str">'orbit iii'</span>, <span class="prop">target</span>: <span class="str">'#orbit-3'</span>, <span class="prop">at</span>: <span class="num">700</span>, <span class="prop">duration</span>: <span class="num">1500</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: <span class="fn">orbitFrames</span>(<span class="num">-15</span>, <span class="num">130</span>) },
+
+  { <span class="prop">name</span>: <span class="str">'comet'</span>, <span class="prop">target</span>: <span class="str">'#hero-comet'</span>, <span class="prop">at</span>: <span class="num">1000</span>, <span class="prop">duration</span>: <span class="num">900</span>, <span class="prop">easing</span>: <span class="str">'ease-in-out'</span>,
+    <span class="prop">keyframes</span>: { <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'translate(-320px, -150px) rotate(25deg) scale(0.6)'</span> },
+                 <span class="num">18</span>:  { <span class="prop">opacity</span>: <span class="str">'1'</span> },
+                 <span class="num">72</span>:  { <span class="prop">opacity</span>: <span class="str">'1'</span> },
+                 <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'translate(320px, 150px) rotate(25deg) scale(1)'</span> } } },
+
+  { <span class="prop">name</span>: <span class="str">'headline'</span>, <span class="prop">target</span>: <span class="str">'#hero-headline'</span>, <span class="prop">at</span>: <span class="num">1400</span>, <span class="prop">duration</span>: <span class="num">700</span>, <span class="prop">easing</span>: <span class="str">'back-out'</span>,
+    <span class="prop">keyframes</span>: { <span class="num">0</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'translateY(26px)'</span> },
+                 <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translateY(0px)'</span> } } },
+];
+
+<span class="kw">const</span> heroTl = <span class="fn">timeline</span>();
+<span class="cm">// Each config doubles as the opts object — name/target/keyframes are ignored</span>
+<span class="cm">// by tween(), and `stagger` rides along for free.</span>
+heroClips.<span class="fn">forEach</span>((c) =&gt; heroTl.<span class="fn">tween</span>(c.target, c.keyframes, c));
+
+<span class="cm">// The playhead line rides the timeline's own 'update' event. Listener first:</span>
+<span class="cm">// the driver seeks in its constructor, so subscribing after it would miss the</span>
+<span class="cm">// bootstrap frame and leave the readout blank until the first scroll.</span>
+<span class="kw">const</span> heroTotal = heroTl.duration;   <span class="cm">// 2200ms — the largest clip end</span>
+heroTl.<span class="fn">on</span>(<span class="str">'update'</span>, (time) =&gt; {
+  heroPlayhead.style.left = <span class="str">`${(time / heroTotal) * 100}%`</span>;
+  heroTime.textContent = <span class="str">`${Math.round(time)} ms`</span>;
+});
+
+<span class="cm">// Deliberately NOT the default range. 'top bottom' would put progress 0 at the</span>
+<span class="cm">// moment the track first pokes above the fold, so most of the timeline would run</span>
+<span class="cm">// while the stage is still half off-screen. Starting at the viewport's centre</span>
+<span class="cm">// means nothing moves until you can actually see it, and the whole scrub then</span>
+<span class="cm">// spans exactly the track's own height.</span>
+<span class="kw">const</span> heroDriver = <span class="fn">scrollDriver</span>(heroTl, {
+  <span class="prop">trigger</span>: <span class="str">'#hero-track'</span>,
+  <span class="prop">start</span>: <span class="str">'top center'</span>,
+  <span class="prop">end</span>: <span class="str">'bottom center'</span>,
+  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-hero'</span>),
+});</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 02 Stagger ---- -->
+    <section class="demo-section" id="sec-stagger">
+      <div class="demo-header">
+        <span class="demo-index">02</span>
+        <h2>One clip, nine start times</h2>
+        <span class="demo-tag">scroll · scrub</span>
+      </div>
+      <p class="demo-desc">A single <code>tween()</code> over a nine-element selector with <em>stagger: 150</em>. Each element gets the same keyframes on its own window, offset by <em>index × 150ms</em>, and the timeline's duration stretches to cover the last one. Outside its window a clip holds its edge frames (<em>fill: 'both'</em>), which is why cards sit patiently at their 0% state until their turn arrives — and stay put afterwards.</p>
+
+      <div class="scrub-track pinned" id="stagger-track">
+        <div class="scrub-sticky">
+          <div class="stage scrub-stage stagger-stage" id="stagger-stage"></div>
+          <div class="meter">
+            <span class="meter-label">driver progress</span>
+            <span class="meter-track"><i class="meter-fill"></i></span>
+            <span class="meter-num">0.000</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timeline()</summary>
+        <pre><code><span class="kw">const</span> cardsTl = <span class="fn">timeline</span>();
+
+cardsTl.<span class="fn">tween</span>(<span class="str">'.stagger-card'</span>, {
+  <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'translateY(70px) rotate(-8deg) scale(0.86)'</span> },
+  <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translateY(0px) rotate(0deg) scale(1)'</span> },
+}, { <span class="prop">duration</span>: <span class="num">700</span>, <span class="prop">stagger</span>: <span class="num">150</span>, <span class="prop">easing</span>: <span class="str">'back-out'</span> });
+
+<span class="cm">// duration → 700 + 8 × 150 = 1900ms</span>
+
+<span class="cm">// The stage is sticky at top:15vh and 62vh tall, so the range is written to</span>
+<span class="cm">// match: progress 0 the moment it pins, 1 as it unpins.</span>
+<span class="fn">scrollDriver</span>(cardsTl, {
+  <span class="prop">trigger</span>: <span class="str">'#stagger-track'</span>,
+  <span class="prop">start</span>: <span class="str">'top 15%'</span>,
+  <span class="prop">end</span>: <span class="str">'bottom 77%'</span>,
+  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-stagger'</span>),
+});</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 03 Smoothing ---- -->
+    <section class="demo-section" id="sec-smooth">
+      <div class="demo-header">
+        <span class="demo-index">03</span>
+        <h2>Locked vs. smoothed</h2>
+        <span class="demo-tag">scroll · scrub</span>
+      </div>
+      <p class="demo-desc">Two identical timelines, one scroll range, two drivers. The left needle is welded to the scroll position; the right one lerps toward it with <em>smoothing: 150</em> — a time constant in milliseconds, so it closes ~63% of the gap every 150ms regardless of frame rate. Flick the page and watch the amber needle trail the teal one, then settle. Smoothing rides the shared ticker and unsubscribes the moment it catches up.</p>
+
+      <div class="scrub-track pinned" id="smooth-track">
+        <div class="scrub-sticky">
+          <div class="stage scrub-stage smooth-stage">
+            <div class="smooth-cell">
+              <div class="gauge">
+                <div class="gauge-arc"></div>
+                <i class="needle" id="needle-locked"></i>
+                <span class="gauge-hub"></span>
+              </div>
+              <div class="smooth-cap">
+                <span class="t">Locked</span>
+                <span class="s">smoothing: 0</span>
+              </div>
+              <span class="smooth-val" id="val-locked">0.000</span>
+            </div>
+            <div class="smooth-cell">
+              <div class="gauge">
+                <div class="gauge-arc"></div>
+                <i class="needle alt" id="needle-smooth"></i>
+                <span class="gauge-hub"></span>
+              </div>
+              <div class="smooth-cap">
+                <span class="t">Smoothed</span>
+                <span class="s">smoothing: 150</span>
+              </div>
+              <span class="smooth-val alt" id="val-smooth">0.000</span>
+            </div>
+          </div>
+          <div class="meter">
+            <span class="meter-label">scroll position</span>
+            <span class="meter-track"><i class="meter-fill"></i></span>
+            <span class="meter-num">0.000</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timelines()</summary>
+        <pre><code><span class="cm">// Same clip, twice — the only difference is the driver.</span>
+<span class="kw">const</span> dial = (target) =&gt;
+  <span class="fn">timeline</span>().<span class="fn">tween</span>(target, {
+    <span class="num">0</span>:   { <span class="prop">transform</span>: <span class="str">'rotate(-62deg)'</span> },
+    <span class="num">100</span>: { <span class="prop">transform</span>: <span class="str">'rotate(62deg)'</span> },
+  }, { <span class="prop">duration</span>: <span class="num">1000</span>, <span class="prop">easing</span>: <span class="str">'linear'</span> });
+
+<span class="kw">const</span> lockedTl = <span class="fn">dial</span>(<span class="str">'#needle-locked'</span>);
+<span class="kw">const</span> smoothTl = <span class="fn">dial</span>(<span class="str">'#needle-smooth'</span>);
+
+<span class="kw">const</span> range = { <span class="prop">trigger</span>: <span class="str">'#smooth-track'</span>, <span class="prop">start</span>: <span class="str">'top 15%'</span>, <span class="prop">end</span>: <span class="str">'bottom 77%'</span> };
+
+<span class="fn">scrollDriver</span>(lockedTl, { ...range, <span class="prop">smoothing</span>: <span class="num">0</span> });     <span class="cm">// welded to scroll</span>
+<span class="fn">scrollDriver</span>(smoothTl, { ...range, <span class="prop">smoothing</span>: <span class="num">150</span>,       <span class="cm">// ms time constant</span>
+  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-smooth'</span>) });                <span class="cm">// onProgress reports the raw scroll</span>
+
+<span class="cm">// Read the two playheads back out for the numbers under each gauge.</span>
+lockedTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; { lockedOut.textContent = lockedTl.<span class="fn">progress</span>().<span class="fn">toFixed</span>(<span class="num">3</span>); });
+smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; { smoothOut.textContent = smoothTl.<span class="fn">progress</span>().<span class="fn">toFixed</span>(<span class="num">3</span>); });</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 04 viewTrigger + physics ---- -->
+    <section class="demo-section" id="sec-pop">
+      <div class="demo-header">
+        <span class="demo-index">04</span>
+        <h2>Triggered, not scrubbed</h2>
+        <span class="demo-tag trigger">viewport · physics</span>
+      </div>
+      <p class="demo-desc">Nothing here is on a playhead. <code>viewTrigger</code> is an IntersectionObserver wrapper: when the stage enters the viewport it plays an <em>animation-engine</em> scene — springs, one per bubble, each with its own friction, settling on their own schedule. That's precisely what a scrubbed clip can't express: a spring has no position-at-time to sample. <em>once: true</em> disconnects the observer after the first entry, so the button below is the only encore.</p>
+
+      <div class="stage pop-stage" id="pop-stage">
+        <i class="pop-bubble"></i>
+        <i class="pop-bubble"></i>
+        <i class="pop-bubble"></i>
+        <i class="pop-bubble"></i>
+        <i class="pop-bubble"></i>
+        <i class="pop-bubble"></i>
+      </div>
+      <div class="status-line">
+        <span class="status-dot" id="pop-dot"></span>
+        <span id="pop-status">waiting for the viewport…</span>
+      </div>
+      <div class="controls">
+        <button class="btn" id="pop-replay">Replay scene</button>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the scene() + viewTrigger()</summary>
+        <pre><code><span class="cm">// scene comes from timeline-engine's bundle — same ticker, one rAF loop.</span>
+<span class="kw">const</span> { scene, viewTrigger } = TimelineEngine;
+
+<span class="cm">// Physics: no duration, no easing — a spring settles when it settles.</span>
+<span class="kw">const</span> pop = <span class="fn">scene</span>().<span class="fn">stagger</span>(<span class="str">'.pop-bubble'</span>, (el, i) =&gt; ({
+  <span class="prop">from</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'translateY(56px) scale(0.35)'</span> },
+  <span class="prop">to</span>:   { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translateY(0px) scale(1)'</span> },
+  <span class="prop">physics</span>: { <span class="prop">attraction</span>: <span class="num">0.03</span>, <span class="prop">friction</span>: <span class="num">0.09</span> + i * <span class="num">0.012</span> },  <span class="cm">// looser on the left</span>
+}), { <span class="prop">interval</span>: <span class="num">90</span> });
+
+<span class="fn">viewTrigger</span>(<span class="str">'#pop-stage'</span>, {
+  <span class="prop">enter</span>: () =&gt; {
+    pop.<span class="fn">play</span>();
+    <span class="fn">setPopStatus</span>(<span class="str">'entered view → scene playing (observer disconnected)'</span>);
+  },
+  <span class="prop">once</span>: <span class="kw">true</span>,
+  <span class="prop">threshold</span>: <span class="num">0.45</span>,
+});
+
+$(<span class="str">'#pop-replay'</span>).<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () =&gt; {
+  pop.<span class="fn">play</span>();
+  <span class="fn">setPopStatus</span>(<span class="str">'replayed by hand'</span>);
+});</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 05 call() ---- -->
+    <section class="demo-section" id="sec-call">
+      <div class="demo-header">
+        <span class="demo-index">05</span>
+        <h2>A scene fired from a timeline position</h2>
+        <span class="demo-tag">scroll · scrub</span>
+        <span class="demo-tag trigger">+ physics</span>
+      </div>
+      <p class="demo-desc">The spark is scrubbed; the burst is not. <code>tl.call()</code> registers a callback at a labelled time — here <em>'ignite'</em>, the end of the spark's clip — and it fires when the playhead crosses it in either direction, scrubbing included. Scroll down past the mark to see direction <em>+1</em> launch a spring-driven burst; scroll back up and the same crossing reports <em>-1</em>, which the callback ignores. This is the bridge between the two halves of the ecosystem.</p>
+
+      <div class="scrub-track pinned" id="fuse-track">
+        <div class="scrub-sticky">
+          <div class="stage scrub-stage fuse-stage">
+            <div class="fuse-rail"></div>
+            <div class="fuse-mark"><span>ignite · 1200ms</span></div>
+            <i class="fuse-flash" id="fuse-flash"></i>
+            <i class="fuse-spark" id="fuse-spark"></i>
+            <div class="shard-origin" id="shard-origin"></div>
+          </div>
+          <ul class="call-log" id="call-log"></ul>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timeline() + call()</summary>
+        <pre><code><span class="cm">// The physics half: a spring burst, built once, replayed on every crossing.</span>
+<span class="kw">const</span> burst = <span class="fn">scene</span>()
+  .<span class="fn">stagger</span>(shards, (el, i) =&gt; {
+    <span class="kw">const</span> angle = (i / shards.length) * Math.PI * <span class="num">2</span>;
+    <span class="kw">return</span> {
+      <span class="prop">from</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translate(0px, 0px) scale(0.3)'</span> },
+      <span class="prop">to</span>: {
+        <span class="prop">opacity</span>: <span class="str">'1'</span>,
+        <span class="prop">transform</span>: <span class="str">`translate(${Math.cos(angle) * 200}px, ${Math.sin(angle) * 120}px) scale(1)`</span>,
+      },
+      <span class="prop">physics</span>: { <span class="prop">attraction</span>: <span class="num">0.018</span>, <span class="prop">friction</span>: <span class="num">0.12</span> },
+    };
+  }, { <span class="prop">interval</span>: <span class="num">14</span> })
+  <span class="cm">// Scene steps are sequential: this waits for every spring to settle.</span>
+  .<span class="fn">stagger</span>(shards, { <span class="prop">to</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span> }, <span class="prop">duration</span>: <span class="num">320</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> }, { <span class="prop">interval</span>: <span class="num">12</span> });
+
+<span class="cm">// The scrubbed half.</span>
+<span class="kw">const</span> fuseTl = <span class="fn">timeline</span>({ <span class="prop">defaults</span>: { <span class="prop">easing</span>: <span class="str">'linear'</span> } });
+
+fuseTl
+  .<span class="fn">tween</span>(<span class="str">'#fuse-spark'</span>, { <span class="num">0</span>: { <span class="prop">left</span>: <span class="str">'8%'</span> }, <span class="num">100</span>: { <span class="prop">left</span>: <span class="str">'50%'</span> } }, { <span class="prop">duration</span>: <span class="num">1200</span> })
+  .<span class="fn">label</span>(<span class="str">'ignite'</span>)                        <span class="cm">// names the current end: 1200ms</span>
+  .<span class="fn">tween</span>(<span class="str">'#fuse-flash'</span>, {
+    <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'scale(0.35)'</span> },
+    <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'scale(1)'</span> },
+  }, { <span class="prop">at</span>: <span class="str">'ignite'</span>, <span class="prop">duration</span>: <span class="num">450</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> })
+  .<span class="fn">call</span>((direction) =&gt; {
+    <span class="fn">logCrossing</span>(direction);
+    <span class="kw">if</span> (direction === <span class="num">1</span>) burst.<span class="fn">play</span>();   <span class="cm">// forward crossings only</span>
+  }, { <span class="prop">at</span>: <span class="str">'ignite'</span> });                    <span class="cm">// once: false — re-arms every pass</span>
+
+<span class="cm">// scrollDriver seeks non-silently by default, so scrubbing fires calls.</span>
+<span class="fn">scrollDriver</span>(fuseTl, { <span class="prop">trigger</span>: <span class="str">'#fuse-track'</span>, <span class="prop">start</span>: <span class="str">'top 15%'</span>, <span class="prop">end</span>: <span class="str">'bottom 77%'</span> });</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 06 Timed playback ---- -->
+    <section class="demo-section" id="sec-play">
+      <div class="demo-header">
+        <span class="demo-index">06</span>
+        <h2>The same timeline, on a clock</h2>
+        <span class="demo-tag clock">play · scrub</span>
+      </div>
+      <p class="demo-desc">Nothing about a timeline assumes scroll. <code>play()</code> rides animation-engine's shared ticker and returns a promise that resolves on completion or pause; <code>timeScale()</code> composes with the ticker's own. Drag the slider and the very same clips are driven by <code>progress(p)</code> instead — the playhead doesn't care who is moving it.</p>
+
+      <div class="stage beat-stage" id="beat-stage">
+      </div>
+
+      <div class="transport">
+        <button class="btn active" id="play-go">Play</button>
+        <button class="btn" id="play-pause">Pause</button>
+        <span class="transport-bar"><i class="transport-fill" id="play-bar"></i></span>
+        <span class="transport-read" id="play-time">0 / 0 ms</span>
+      </div>
+
+      <div class="scrub-row">
+        <span class="slider-label">scrub</span>
+        <input type="range" id="play-scrub" min="0" max="1" step="0.001" value="0" />
+      </div>
+
+      <div class="controls">
+        <button class="btn small" data-rate="0.5">0.5×</button>
+        <button class="btn small active" data-rate="1">1×</button>
+        <button class="btn small" data-rate="2">2×</button>
+        <span class="status-line" style="margin: 0 0 0 auto;">
+          <span class="status-dot" id="play-dot"></span>
+          <span id="play-status">idle</span>
+        </span>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timeline() + transport</summary>
+        <pre><code><span class="kw">const</span> playTl = <span class="fn">timeline</span>({ <span class="prop">defaults</span>: { <span class="prop">easing</span>: <span class="str">'ease-in-out'</span> } });
+
+playTl.<span class="fn">tween</span>(<span class="str">'.beat'</span>, {
+  <span class="num">0</span>:   { <span class="prop">transform</span>: <span class="str">'scaleY(0.12)'</span>, <span class="prop">opacity</span>: <span class="str">'0.3'</span> },
+  <span class="num">100</span>: { <span class="prop">transform</span>: <span class="str">'scaleY(1)'</span>,    <span class="prop">opacity</span>: <span class="str">'1'</span> },
+}, { <span class="prop">duration</span>: <span class="num">600</span>, <span class="prop">stagger</span>: <span class="num">80</span>, <span class="prop">easing</span>: <span class="str">'back-out'</span> });
+
+playTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span class="cm">// paint the 0% frame — a timeline writes nothing until seeked</span>
+
+<span class="cm">// One 'update' listener feeds the bar, the readout and the slider.</span>
+playTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; {
+  <span class="kw">const</span> p = playTl.<span class="fn">progress</span>();
+  playBar.style.transform = <span class="str">`scaleX(${p})`</span>;
+  playTime.textContent = <span class="str">`${Math.round(playTl.time())} / ${playTl.duration} ms`</span>;
+  playScrub.value = <span class="fn">String</span>(p);
+});
+
+$(<span class="str">'#play-go'</span>).<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="kw">async</span> () =&gt; {
+  <span class="fn">setPlayStatus</span>(<span class="str">'playing'</span>, <span class="kw">true</span>);
+  <span class="kw">await</span> playTl.<span class="fn">play</span>();          <span class="cm">// resolves on complete OR pause</span>
+  <span class="fn">setPlayStatus</span>(playTl.<span class="fn">progress</span>() &gt;= <span class="num">1</span> ? <span class="str">'complete'</span> : <span class="str">'paused'</span>, <span class="kw">false</span>);
+});
+
+$(<span class="str">'#play-pause'</span>).<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () =&gt; playTl.<span class="fn">pause</span>());
+
+playScrub.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, () =&gt; {
+  <span class="kw">if</span> (playTl.playing) playTl.<span class="fn">pause</span>();
+  playTl.<span class="fn">progress</span>(<span class="fn">Number</span>(playScrub.value));   <span class="cm">// same clips, hand-driven</span>
+  <span class="fn">setPlayStatus</span>(<span class="str">'scrubbing'</span>, <span class="kw">false</span>);
+});
+
+$$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn) =&gt; {
+  btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () =&gt; {
+    playTl.<span class="fn">timeScale</span>(<span class="fn">Number</span>(btn.dataset.rate));
+    $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((b) =&gt; b.classList.<span class="fn">toggle</span>(<span class="str">'active'</span>, b === btn));
+  });
+});</code></pre>
+      </details>
+    </section>
+
+    <section class="demo-section" id="sec-studio">
+      <div class="demo-header">
+        <span class="demo-index">07</span>
+        <h2>Your cursor is the playhead</h2>
+        <span class="demo-tag clock">hover · scrub · play</span>
+      </div>
+      <p class="demo-desc">No scroll here — <code>scrollDriver</code> is just one way to pick a number. Sweep across the panel and cursor X <em>is</em> the playhead; the strip below is drawn from the same clip list that built the timeline, lit where a clip is actually interpolating and dimmed where it's only holding a fill frame. Pull the cursor away and <code>play()</code> picks it up from exactly where you left it. Hover again to take it back mid-flight.</p>
+
+      <div class="studio" id="studio">
+        <div class="sigil-stage" id="sigil-stage">
+          <div class="sig-aura" id="sig-aura"></div>
+          <div class="sig-ring" id="sig-ring"></div>
+          <div class="sig-arc" id="sig-arc"></div>
+          <div class="sig-core" id="sig-core"></div>
+          <div class="sig-beam" id="sig-beam"></div>
+        </div>
+
+        <div class="studio-strip">
+          <div class="strip-head">
+            <span class="strip-time" id="studio-time">0 ms</span>
+            <span class="owner strip-end" id="studio-owner">▶ clock</span>
+          </div>
+          <div id="studio-lanes"></div>
+          <div class="strip-overlay" id="studio-range"><i class="strip-playhead" id="studio-playhead"></i></div>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the hover driver + clip list</summary>
+        <pre><code><span class="cm">// A driver is just "pick a time, call seek". ~14 lines, no library support</span>
+<span class="cm">// needed — this is the same shape a timeline editor's playhead would use.</span>
+<span class="cm">//</span>
+<span class="cm">// `el` is the surface you can hover (the whole panel); `range` is what x maps</span>
+<span class="cm">// against — the playhead's own coordinate space, so cursor and playhead line up</span>
+<span class="cm">// exactly instead of being a label-gutter apart. smoothing is a time-constant</span>
+<span class="cm">// in ms; 20 reads as immediate but still filters pointer jitter.</span>
+<span class="kw">function</span> <span class="fn">hoverDriver</span>(tl, el, { range = el, smoothing = <span class="num">20</span> } = {}) {
+  <span class="kw">let</span> target = <span class="num">0</span>, holding = <span class="kw">false</span>;
+
+  el.<span class="fn">addEventListener</span>(<span class="str">'pointermove'</span>, (e) =&gt; {
+    <span class="kw">const</span> r = range.<span class="fn">getBoundingClientRect</span>();
+    <span class="cm">// Store a number only — the ticker does the seeking, so pointermove</span>
+    <span class="cm">// can fire as fast as it likes and we still scrub once per frame.</span>
+    target = <span class="fn">clamp</span>((e.clientX - r.left) / r.width) * tl.duration;
+    <span class="kw">if</span> (!holding) { tl.<span class="fn">pause</span>(); holding = <span class="kw">true</span>; }
+  });
+
+  el.<span class="fn">addEventListener</span>(<span class="str">'pointerleave'</span>, () =&gt; {
+    holding = <span class="kw">false</span>;
+    tl.<span class="fn">play</span>();   <span class="cm">// resumes from the current playhead — no reset</span>
+  });
+
+  ticker.<span class="fn">subscribe</span>((dt) =&gt; {
+    <span class="kw">if</span> (!holding) <span class="kw">return</span>;
+    <span class="kw">const</span> k = <span class="num">1</span> - Math.<span class="fn">exp</span>(-dt / smoothing);
+    tl.<span class="fn">seek</span>(tl.<span class="fn">time</span>() + (target - tl.<span class="fn">time</span>()) * k);
+  });
+}
+
+<span class="cm">// One list builds the timeline AND draws the strip — the studio-app shape.</span>
+<span class="kw">const</span> sigilClips = [
+  { <span class="prop">name</span>: <span class="str">'aura'</span>,  <span class="prop">target</span>: <span class="str">'#sig-aura'</span>, <span class="prop">at</span>: <span class="num">0</span>,    <span class="prop">duration</span>: <span class="num">1400</span>, <span class="prop">easing</span>: <span class="str">'linear'</span>,   <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'ring'</span>,  <span class="prop">target</span>: <span class="str">'#sig-ring'</span>, <span class="prop">at</span>: <span class="num">100</span>,  <span class="prop">duration</span>: <span class="num">900</span>,  <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'arc'</span>,   <span class="prop">target</span>: <span class="str">'#sig-arc'</span>,  <span class="prop">at</span>: <span class="num">250</span>,  <span class="prop">duration</span>: <span class="num">900</span>,  <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'runes'</span>, <span class="prop">target</span>: <span class="str">'.sig-rune'</span>, <span class="prop">at</span>: <span class="num">500</span>,  <span class="prop">duration</span>: <span class="num">700</span>,  <span class="prop">stagger</span>: <span class="num">90</span>,        <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'core'</span>,  <span class="prop">target</span>: <span class="str">'#sig-core'</span>, <span class="prop">at</span>: <span class="num">700</span>,  <span class="prop">duration</span>: <span class="num">600</span>,  <span class="prop">easing</span>: <span class="str">'back-out'</span>, <span class="prop">keyframes</span>: {…} },
+  <span class="cm">// Second clip on the SAME element, starting after the first has ended.</span>
+  <span class="cm">// It wins while it runs; the moment it stops, 'core' is holding a fill</span>
+  <span class="cm">// frame and loses to nothing. Active always beats fill.</span>
+  { <span class="prop">name</span>: <span class="str">'core pulse'</span>, <span class="prop">target</span>: <span class="str">'#sig-core'</span>, <span class="prop">at</span>: <span class="num">1500</span>, <span class="prop">duration</span>: <span class="num">900</span>, <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'beam'</span>,  <span class="prop">target</span>: <span class="str">'#sig-beam'</span>,  <span class="prop">at</span>: <span class="num">1350</span>, <span class="prop">duration</span>: <span class="num">850</span>, <span class="prop">keyframes</span>: {…} },
+];
+
+<span class="kw">const</span> sigilTl = <span class="fn">timeline</span>({ <span class="prop">defaults</span>: { <span class="prop">easing</span>: <span class="str">'ease-in-out'</span> } });
+sigilClips.<span class="fn">forEach</span>((c) =&gt; sigilTl.<span class="fn">tween</span>(c.target, c.keyframes, c));
+
+<span class="cm">// The beam crossing the core. direction: 1 so scrubbing back doesn't re-fire it.</span>
+sigilTl.<span class="fn">call</span>(() =&gt; <span class="fn">flashCore</span>(), { <span class="prop">at</span>: <span class="num">1750</span>, <span class="prop">direction</span>: <span class="num">1</span> });
+
+<span class="fn">hoverDriver</span>(sigilTl, $(<span class="str">'#studio'</span>));
+sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span class="cm">// paint the start state; nothing is written until this</span>
+
+<span class="cm">// Everything starts at opacity 0, so at rest the stage is simply empty. Play it</span>
+<span class="cm">// through once on arrival so it settles assembled and invites the scrub —</span>
+<span class="cm">// hovering mid-flight just pauses it and takes over.</span>
+<span class="fn">viewTrigger</span>(<span class="str">'#sec-studio'</span>, { <span class="prop">enter</span>: () =&gt; sigilTl.<span class="fn">play</span>(), <span class="prop">once</span>: <span class="kw">true</span>, <span class="prop">threshold</span>: <span class="num">0.35</span> });</code></pre>
+      </details>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <p><span id="clip-count">0</span> clips across <span id="tl-count">0</span> timelines · one shared ticker ·
+      <a href="https://github.com/magic-spells/timeline-engine" target="_blank" rel="noopener">timeline-engine</a> ·
+      <a href="https://github.com/magic-spells/animation-engine" target="_blank" rel="noopener">animation-engine</a></p>
+  </footer>
+
+  <!-- One self-contained UMD build, so this page works as static files on
+       GitHub Pages (no bundler, no bare imports). It comes from this repo's own
+       dist/ — run `npm run build` (or `npm run prod` to watch) after editing
+       src/, or the demo won't change.
+
+       `scene` comes from TimelineEngine, not a second animation-engine
+       script. The UMD inlines animation-engine, so loading it separately would
+       give this page two copies of the ticker singleton and two rAF loops —
+       `ticker.timeScale` would then slow the physics scenes and leave the
+       timelines untouched. One bundle, one ticker. -->
+  <script src="../dist/timeline-engine.min.js"></script>
+  <script type="module">
+    const { timeline, scrollDriver, viewTrigger, scene, ticker } = TimelineEngine;
+
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+    // Footer bookkeeping.
+    const stats = { clips: 0, timelines: 0 };
+    function countTimeline(tl, clips) {
+      stats.timelines += 1;
+      stats.clips += clips;
+      $('#clip-count').textContent = stats.clips;
+      $('#tl-count').textContent = stats.timelines;
+      return tl;
+    }
+
+    // A section's little progress meter, shaped for scrollDriver's onProgress.
+    function meter(sectionId) {
+      const fill = $(`#${sectionId} .meter-fill`);
+      const num = $(`#${sectionId} .meter-num`);
+      return (p) => {
+        fill.style.transform = `scaleX(${p})`;
+        num.textContent = p.toFixed(3);
+      };
+    }
+
+    // ============================================================
+    // 01 — Clips at offset start times (scroll-scrubbed, default range)
+    // ============================================================
+    // Deterministic starfield: a tiny LCG rather than Math.random, so the sky is
+    // laid out identically on every load. These are static CSS positions — only
+    // the twinkle is tweened — but a demo that reshuffles itself on refresh
+    // makes it impossible to tell a layout change from a reload.
+    const heroStage = $('#hero-stage');
+    let starSeed = 20260727;
+    const starRnd = () => ((starSeed = (starSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    for (let i = 0; i < 34; i += 1) {
+      const dot = document.createElement('i');
+      dot.className = starRnd() > 0.78 ? 'star-dot big' : 'star-dot';
+      dot.style.left = `${(starRnd() * 100).toFixed(2)}%`;
+      dot.style.top = `${(starRnd() * 100).toFixed(2)}%`;
+      heroStage.insertBefore(dot, heroStage.firstChild); // behind the system
+    }
+
+    // Sparse middle key: only opacity, so the rotation interpolates straight
+    // through it (CSS @keyframes semantics).
+    const orbitFrames = (from, to) => ({
+      0: { opacity: '0', transform: `rotate(${from}deg)` },
+      22: { opacity: '1' },
+      100: { opacity: '1', transform: `rotate(${to}deg)` },
+    });
+
+    // One list drives both the timeline and the ruler drawn under the stage.
+    const heroClips = [
+      {
+        // Sized so the LAST star lands on the timeline's own end: the 34th
+        // element starts at 33 * 26 = 858, so 858 + 1340 ≈ 2200. The field is
+        // still shimmering as the outermost planet finishes its arc.
+        name: 'starfield', target: '.star-dot', at: 0, duration: 1340, easing: 'linear', stagger: 26,
+        keyframes: {
+          // Three twinkle cycles per star. Staggered across 34 of them the field
+          // never settles — and because it's all keyframed, it scrubs backwards
+          // just as happily as forwards.
+          0: { opacity: '0', transform: 'scale(0.3)' },
+          18: { opacity: '1', transform: 'scale(1)' },
+          34: { opacity: '0.3', transform: 'scale(0.72)' },
+          50: { opacity: '0.95', transform: 'scale(1)' },
+          66: { opacity: '0.35', transform: 'scale(0.78)' },
+          82: { opacity: '1', transform: 'scale(1)' },
+          100: { opacity: '0.7', transform: 'scale(0.92)' },
+        },
+      },
+      {
+        name: 'sun', target: '#hero-sun', at: 200, duration: 900, easing: 'back-out',
+        keyframes: {
+          0: { opacity: '0', transform: 'scale(0)' },
+          100: { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      { name: 'orbit i', target: '#orbit-1', at: 400, duration: 1500, easing: 'ease-out', keyframes: orbitFrames(-40, 185) },
+      { name: 'orbit ii', target: '#orbit-2', at: 550, duration: 1500, easing: 'ease-out', keyframes: orbitFrames(30, -145) },
+      { name: 'orbit iii', target: '#orbit-3', at: 700, duration: 1500, easing: 'ease-out', keyframes: orbitFrames(-15, 130) },
+      {
+        name: 'comet', target: '#hero-comet', at: 1000, duration: 900, easing: 'ease-in-out',
+        keyframes: {
+          0: { opacity: '0', transform: 'translate(-320px, -150px) rotate(25deg) scale(0.6)' },
+          18: { opacity: '1' },
+          72: { opacity: '1' },
+          100: { opacity: '0', transform: 'translate(320px, 150px) rotate(25deg) scale(1)' },
+        },
+      },
+      {
+        name: 'headline', target: '#hero-headline', at: 1400, duration: 700, easing: 'back-out',
+        keyframes: {
+          0: { opacity: '0', transform: 'translateY(26px)' },
+          100: { opacity: '1', transform: 'translateY(0px)' },
+        },
+      },
+    ];
+
+    const heroTl = timeline();
+    // Each config doubles as the opts object — `name`/`target`/`keyframes` are
+    // ignored by tween(), and `stagger` rides along for free.
+    heroClips.forEach((c) => heroTl.tween(c.target, c.keyframes, c));
+    countTimeline(heroTl, heroClips.length);
+
+    // Draw the ruler from the same clip list.
+    const heroLanes = $('#hero-lanes');
+    const heroTotal = heroTl.duration;
+    heroClips.forEach((c) => {
+      const lane = document.createElement('div');
+      lane.className = 'lane';
+      const name = document.createElement('span');
+      name.className = 'lane-name';
+      name.textContent = c.name;
+      const track = document.createElement('span');
+      track.className = 'lane-track';
+      const bar = document.createElement('i');
+      bar.className = 'lane-bar';
+      // A staggered clip's lane runs until its LAST element finishes, which is
+      // later than at + duration.
+      const span = c.duration + (c.stagger || 0) * (c.stagger ? $$(c.target).length - 1 : 0);
+      bar.style.left = `${(c.at / heroTotal) * 100}%`;
+      bar.style.width = `${(span / heroTotal) * 100}%`;
+      track.appendChild(bar);
+      lane.append(name, track);
+      heroLanes.appendChild(lane);
+    });
+
+    const heroPlayhead = $('#hero-playhead');
+    const heroTime = $('#hero-time');
+    heroTl.on('update', (time) => {
+      heroPlayhead.style.left = `${(time / heroTotal) * 100}%`;
+      heroTime.textContent = `${Math.round(time)} ms`;
+    });
+
+    // Deliberately NOT the default range. 'top bottom' would put progress 0 at
+    // the moment the track first pokes above the fold, so most of the timeline
+    // would run while the stage is still half off-screen. Starting at the
+    // viewport's centre means nothing moves until you can actually see it, and
+    // the whole scrub then spans exactly the track's own height.
+    const heroDriver = scrollDriver(heroTl, {
+      trigger: '#hero-track',
+      start: 'top center',
+      end: 'bottom center',
+      onProgress: meter('sec-hero'),
+    });
+
+    // ============================================================
+    // 02 — One clip, nine start times (stagger)
+    // ============================================================
+    const staggerStage = $('#stagger-stage');
+    for (let i = 0; i < 9; i += 1) {
+      const card = document.createElement('div');
+      card.className = 'stagger-card';
+      card.innerHTML = `<b>${i + 1}</b><span>+${i * 150}ms</span>`;
+      staggerStage.appendChild(card);
+    }
+
+    const cardsTl = timeline();
+    cardsTl.tween('.stagger-card', {
+      0: { opacity: '0', transform: 'translateY(70px) rotate(-8deg) scale(0.86)' },
+      100: { opacity: '1', transform: 'translateY(0px) rotate(0deg) scale(1)' },
+    }, { duration: 700, stagger: 150, easing: 'back-out' });
+    countTimeline(cardsTl, 1);
+
+    // The stage is sticky at top:15vh and 62vh tall, so the range is written to
+    // match: progress 0 the moment it pins, 1 as it unpins.
+    const cardsDriver = scrollDriver(cardsTl, {
+      trigger: '#stagger-track',
+      start: 'top 15%',
+      end: 'bottom 77%',
+      onProgress: meter('sec-stagger'),
+    });
+
+    // ============================================================
+    // 03 — Locked vs. smoothed
+    // ============================================================
+    const dial = (target) =>
+      timeline().tween(target, {
+        0: { transform: 'rotate(-62deg)' },
+        100: { transform: 'rotate(62deg)' },
+      }, { duration: 1000, easing: 'linear' });
+
+    const lockedTl = countTimeline(dial('#needle-locked'), 1);
+    const smoothTl = countTimeline(dial('#needle-smooth'), 1);
+
+    const smoothRange = { trigger: '#smooth-track', start: 'top 15%', end: 'bottom 77%' };
+    const lockedDriver = scrollDriver(lockedTl, { ...smoothRange, smoothing: 0 });
+    const smoothDriver = scrollDriver(smoothTl, {
+      ...smoothRange,
+      smoothing: 150,
+      onProgress: meter('sec-smooth'),
+    });
+
+    const lockedOut = $('#val-locked');
+    const smoothOut = $('#val-smooth');
+    lockedTl.on('update', () => { lockedOut.textContent = lockedTl.progress().toFixed(3); });
+    smoothTl.on('update', () => { smoothOut.textContent = smoothTl.progress().toFixed(3); });
+
+    // ============================================================
+    // 04 — Triggered, not scrubbed (viewTrigger → physics scene)
+    // ============================================================
+    const popDot = $('#pop-dot');
+    const popStatus = $('#pop-status');
+    function setPopStatus(text) {
+      popStatus.textContent = text;
+      popDot.classList.add('on');
+    }
+
+    // Physics: no duration, no easing — a spring settles when it settles.
+    const pop = scene().stagger('.pop-bubble', (el, i) => ({
+      from: { opacity: '0', transform: 'translateY(56px) scale(0.35)' },
+      to: { opacity: '1', transform: 'translateY(0px) scale(1)' },
+      physics: { attraction: 0.03, friction: 0.09 + i * 0.012 },
+    }), { interval: 90 });
+
+    viewTrigger('#pop-stage', {
+      enter: () => {
+        pop.play();
+        setPopStatus('entered view → scene playing (observer disconnected)');
+      },
+      once: true,
+      threshold: 0.45,
+    });
+
+    $('#pop-replay').addEventListener('click', () => {
+      pop.play();
+      setPopStatus('replayed by hand');
+    });
+
+    // ============================================================
+    // 05 — A scene fired from a timeline position (call)
+    // ============================================================
+    const shardOrigin = $('#shard-origin');
+    for (let i = 0; i < 16; i += 1) {
+      const shard = document.createElement('i');
+      shard.className = 'shard';
+      shardOrigin.appendChild(shard);
+    }
+    const shards = $$('.shard');
+
+    // The physics half: a spring burst, built once, replayed on every crossing.
+    // Two steps, so the shards stay lit for the whole flight and only fade
+    // once every spring has settled.
+    const burst = scene()
+      .stagger(shards, (el, i) => {
+        const angle = (i / shards.length) * Math.PI * 2;
+        return {
+          from: { opacity: '1', transform: 'translate(0px, 0px) scale(0.3)' },
+          to: {
+            opacity: '1',
+            transform: `translate(${Math.cos(angle) * 200}px, ${Math.sin(angle) * 120}px) scale(1)`,
+          },
+          physics: { attraction: 0.018, friction: 0.12 },
+        };
+      }, { interval: 14 })
+      .stagger(shards, { to: { opacity: '0' }, duration: 320, easing: 'ease-out' }, { interval: 12 });
+
+    const callLog = $('#call-log');
+    function logCrossing(direction) {
+      const item = document.createElement('li');
+      item.innerHTML = direction === 1
+        ? `<b>▸ call fired</b> · direction <i>+1</i> · burst.play()`
+        : `▸ call fired · direction <i>-1</i> · ignored`;
+      callLog.prepend(item);
+      while (callLog.children.length > 5) callLog.lastElementChild.remove();
+    }
+
+    // The scrubbed half.
+    const fuseTl = timeline({ defaults: { easing: 'linear' } });
+    fuseTl
+      .tween('#fuse-spark', { 0: { left: '8%' }, 100: { left: '50%' } }, { duration: 1200 })
+      .label('ignite')                          // names the current end: 1200ms
+      .tween('#fuse-flash', {
+        0: { opacity: '0', transform: 'scale(0.35)' },
+        100: { opacity: '1', transform: 'scale(1)' },
+      }, { at: 'ignite', duration: 450, easing: 'ease-out' })
+      .call((direction) => {
+        logCrossing(direction);
+        if (direction === 1) burst.play();      // forward crossings only
+      }, { at: 'ignite' });                     // once: false — re-arms every pass
+    countTimeline(fuseTl, 2);
+
+    // scrollDriver seeks non-silently by default, so scrubbing fires calls.
+    const fuseDriver = scrollDriver(fuseTl, {
+      trigger: '#fuse-track',
+      start: 'top 15%',
+      end: 'bottom 77%',
+    });
+
+    // ============================================================
+    // 06 — The same timeline, on a clock
+    // ============================================================
+    const beatStage = $('#beat-stage');
+    for (let i = 0; i < 14; i += 1) {
+      const beat = document.createElement('i');
+      beat.className = 'beat';
+      beatStage.appendChild(beat);
+    }
+
+    const playTl = timeline({ defaults: { easing: 'ease-in-out' } });
+    playTl.tween('.beat', {
+      0: { transform: 'scaleY(0.12)', opacity: '0.3' },
+      100: { transform: 'scaleY(1)', opacity: '1' },
+    }, { duration: 600, stagger: 80, easing: 'back-out' });
+    countTimeline(playTl, 1);
+
+    // A timeline writes nothing until it is seeked — paint the 0% frame.
+    playTl.progress(0);
+
+    const playBar = $('#play-bar');
+    const playTime = $('#play-time');
+    const playScrub = $('#play-scrub');
+    const playDot = $('#play-dot');
+    const playStatus = $('#play-status');
+
+    function setPlayStatus(text, live) {
+      playStatus.textContent = text;
+      playDot.classList.toggle('on', !!live);
+    }
+
+    playTl.on('update', () => {
+      const p = playTl.progress();
+      playBar.style.transform = `scaleX(${p})`;
+      playTime.textContent = `${Math.round(playTl.time())} / ${playTl.duration} ms`;
+      playScrub.value = String(p);
+    });
+
+    // A scrub pauses to take the playhead, which resolves the awaited play()
+    // below — whose continuation would then overwrite 'scrubbing' with 'paused'
+    // on the very next microtask. This flag lets the more specific label win.
+    let scrubbing = false;
+
+    $('#play-go').addEventListener('click', async () => {
+      scrubbing = false;
+      setPlayStatus('playing', true);
+      await playTl.play();                      // resolves on complete OR pause
+      if (scrubbing) return;
+      setPlayStatus(playTl.progress() >= 1 ? 'complete' : 'paused', false);
+    });
+
+    $('#play-pause').addEventListener('click', () => playTl.pause());
+
+    playScrub.addEventListener('input', () => {
+      scrubbing = true;
+      if (playTl.playing) playTl.pause();
+      playTl.progress(Number(playScrub.value));  // same clips, hand-driven
+      setPlayStatus('scrubbing', false);
+    });
+
+    $$('[data-rate]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        playTl.timeScale(Number(btn.dataset.rate));
+        $$('[data-rate]').forEach((b) => b.classList.toggle('active', b === btn));
+      });
+    });
+
+    // ============================================================
+    // 07 — Your cursor is the playhead (hover-scrubbed studio preview)
+    // ============================================================
+
+    // Five runes laid out around the ring. The wrapper carries the circle
+    // placement so the clip only ever animates the inner <i>.
+    const RUNES = ['Ψ', 'Δ', 'Φ', 'Ω', 'Θ'];
+    const sigilStage = $('#sigil-stage');
+    const sigilCore = $('#sig-core');
+    RUNES.forEach((glyph, i) => {
+      const angle = (-90 + i * (360 / RUNES.length)) * (Math.PI / 180);
+      const rune = document.createElement('div');
+      rune.className = 'sig-rune';
+      rune.style.setProperty('--rx', `${Math.cos(angle) * 113}px`);
+      rune.style.setProperty('--ry', `${Math.sin(angle) * 113}px`);
+      rune.innerHTML = `<i>${glyph}</i>`;
+      // Before the core so the runes sit behind it, not over it.
+      sigilStage.insertBefore(rune, sigilCore);
+    });
+
+    // Centred children each carry their own translate(-50%,-50%), and every
+    // keyframe repeats the same transform token order — that's what keeps the
+    // interpolation a straight numeric lerp.
+    const sigilClips = [
+      {
+        name: 'aura', target: '#sig-aura', at: 0, duration: 1400, easing: 'linear',
+        keyframes: {
+          0: { opacity: '0', transform: 'translate(-50%, -50%) scale(0.6)' },
+          100: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+        },
+      },
+      {
+        name: 'ring', target: '#sig-ring', at: 100, duration: 900, easing: 'ease-out',
+        keyframes: {
+          0: { opacity: '0', transform: 'translate(-50%, -50%) rotate(-120deg) scale(0.55)' },
+          100: { opacity: '1', transform: 'translate(-50%, -50%) rotate(0deg) scale(1)' },
+        },
+      },
+      {
+        name: 'arc', target: '#sig-arc', at: 250, duration: 900, easing: 'ease-out',
+        keyframes: {
+          0: { opacity: '0', transform: 'translate(-50%, -50%) rotate(150deg) scale(0.4)' },
+          100: { opacity: '1', transform: 'translate(-50%, -50%) rotate(-30deg) scale(1)' },
+        },
+      },
+      {
+        name: 'runes', target: '.sig-rune i', at: 500, duration: 700, easing: 'back-out', stagger: 90,
+        keyframes: {
+          0: { opacity: '0', transform: 'translateY(14px) scale(0.2)' },
+          100: { opacity: '1', transform: 'translateY(0px) scale(1)' },
+        },
+      },
+      {
+        name: 'core', target: '#sig-core', at: 700, duration: 600, easing: 'back-out',
+        keyframes: {
+          0: { opacity: '0', transform: 'translate(-50%, -50%) scale(0)' },
+          100: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+        },
+      },
+      {
+        // Second clip on the same element, starting well after 'core' has ended.
+        // It sets no opacity — that still comes from 'core' holding its end
+        // fill frame, while the transform comes from here. Active beats fill.
+        name: 'core pulse', target: '#sig-core', at: 1500, duration: 900, accent: true,
+        keyframes: {
+          0: { transform: 'translate(-50%, -50%) scale(1)' },
+          50: { transform: 'translate(-50%, -50%) scale(1.32)' },
+          100: { transform: 'translate(-50%, -50%) scale(1)' },
+        },
+      },
+      {
+        name: 'beam', target: '#sig-beam', at: 1350, duration: 850,
+        keyframes: {
+          0: { opacity: '0', transform: 'translate(-50%, -50%) translateX(-180px) scaleX(0.15)' },
+          50: { opacity: '1', transform: 'translate(-50%, -50%) translateX(0px) scaleX(1)' },
+          100: { opacity: '0', transform: 'translate(-50%, -50%) translateX(180px) scaleX(0.15)' },
+        },
+      },
+    ];
+
+    const sigilTl = timeline({ defaults: { easing: 'ease-in-out' } });
+    // Each clip config doubles as the opts object — `name`/`target`/`keyframes`
+    // are simply ignored by tween(), so one list drives the timeline and the strip.
+    sigilClips.forEach((c) => sigilTl.tween(c.target, c.keyframes, c));
+
+    // The beam reaches the core at its 50% key: 1350 + 850/2.
+    let flashTimer = 0;
+    sigilTl.call(() => {
+      sigilCore.classList.add('flash');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => sigilCore.classList.remove('flash'), 260);
+    }, { at: 1775, direction: 1 });
+
+    countTimeline(sigilTl, sigilClips.length);
+
+    // ---- Draw the strip from the same list ----
+    const sigilTotal = sigilTl.duration;
+    const sigilLanes = $('#studio-lanes');
+    const sigilBars = sigilClips.map((c) => {
+      // A staggered clip's lane spans until its LAST element finishes, which is
+      // later than at + duration.
+      const count = c.stagger ? $$(c.target).length : 1;
+      const start = c.at;
+      const end = c.at + c.duration + (c.stagger || 0) * (count - 1);
+
+      const lane = document.createElement('div');
+      lane.className = 'studio-lane';
+      const name = document.createElement('span');
+      name.className = 'lane-name';
+      name.textContent = c.name;
+      const track = document.createElement('span');
+      track.className = 'lane-track';
+      const bar = document.createElement('i');
+      bar.className = c.accent ? 'studio-bar accent' : 'studio-bar';
+      bar.style.left = `${(start / sigilTotal) * 100}%`;
+      bar.style.width = `${((end - start) / sigilTotal) * 100}%`;
+      track.appendChild(bar);
+      lane.append(name, track);
+      sigilLanes.appendChild(lane);
+
+      return { bar, lane, start, end };
+    });
+
+    const sigilPlayhead = $('#studio-playhead');
+    const sigilTime = $('#studio-time');
+    sigilTl.on('update', (time) => {
+      sigilPlayhead.style.left = `${(time / sigilTotal) * 100}%`;
+      sigilTime.textContent = `${Math.round(time)} / ${sigilTotal} ms`;
+      // Lit where a clip is interpolating, dim where it's only holding a fill
+      // frame — the same distinction getFrames() makes when it merges.
+      sigilBars.forEach(({ bar, lane, start, end }) => {
+        const live = time >= start && time <= end;
+        bar.classList.toggle('live', live);
+        lane.classList.toggle('live', live);
+      });
+    });
+
+    // ---- The driver ----
+    const clamp01 = (n) => (n < 0 ? 0 : n > 1 ? 1 : n);
+
+    // A driver is just "pick a time, call seek". scrollDriver reads scrollY;
+    // this reads clientX. Nothing in Timeline knows the difference.
+    //
+    // `el` is the surface you can hover (the whole panel, stage included);
+    // `range` is what x maps against — the playhead's own coordinate space, so
+    // the cursor and the playhead line up exactly. Without that split, progress
+    // 0 would sit at the panel's left edge, 104px of label gutter before the
+    // bars actually start. Out-of-range x clamps, so the labels pin to 0.
+    //
+    // smoothing is a time-constant in ms: at a 16.7ms frame, 20 closes ~57% of
+    // the remaining gap per frame (~92% within three), which reads as immediate
+    // while still filtering pointer jitter.
+    function hoverDriver(tl, el, { range = el, smoothing = 20, onOwner } = {}) {
+      let target = 0;
+      let holding = false;
+
+      el.addEventListener('pointermove', (e) => {
+        const rect = range.getBoundingClientRect();
+        target = clamp01((e.clientX - rect.left) / rect.width) * tl.duration;
+        if (!holding) {
+          holding = true;
+          tl.pause();
+          onOwner?.(true);
+        }
+      });
+
+      el.addEventListener('pointerleave', () => {
+        if (!holding) return;
+        holding = false;
+        onOwner?.(false);
+        tl.play(); // resumes from the current playhead (restarts only if at the end)
+      });
+
+      // Seeking happens here, not in pointermove — one scrub per frame, on the
+      // same rAF loop everything else in the ecosystem shares.
+      ticker.subscribe((delta) => {
+        if (!holding) return;
+        const k = 1 - Math.exp(-delta / smoothing);
+        tl.seek(tl.time() + (target - tl.time()) * k);
+      });
+    }
+
+    const sigilOwner = $('#studio-owner');
+    hoverDriver(sigilTl, $('#studio'), {
+      range: $('#studio-range'),
+      onOwner: (isCursor) => {
+        sigilOwner.textContent = isCursor ? '▮ cursor' : '▶ clock';
+        sigilOwner.classList.toggle('is-cursor', isCursor);
+      },
+    });
+
+    // A timeline writes nothing until it is seeked — paint the 0% frame.
+    sigilTl.progress(0);
+
+    // Everything starts at opacity 0, so at rest the stage is simply empty —
+    // fine for a scroll-driven section that you arrive at from the top, useless
+    // for a hover-driven one you might never touch. Play it through once on
+    // arrival so it settles assembled and invites the scrub. Hovering mid-flight
+    // just pauses it and takes over, which is the point of the section anyway.
+    viewTrigger('#sec-studio', {
+      enter: () => sigilTl.play(),
+      once: true,
+      threshold: 0.35,
+    });
+
+    // Layout can settle after fonts load; every driver re-measures its range.
+    const drivers = [heroDriver, cardsDriver, lockedDriver, smoothDriver, fuseDriver];
+    window.addEventListener('load', () => drivers.forEach((d) => d.refresh()));
+  </script>
+</body>
+</html>

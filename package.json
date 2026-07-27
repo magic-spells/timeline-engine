@@ -1,0 +1,46 @@
+{
+  "name": "@magic-spells/timeline-engine",
+  "version": "0.1.0",
+  "description": "Scrubable animation timeline — keyframe clips at offset start times, driven by the clock, a scrub position, or scroll, for the magic-spells ecosystem",
+  "type": "module",
+  "main": "./dist/timeline-engine.esm.js",
+  "module": "./dist/timeline-engine.esm.js",
+  "types": "./dist/timeline-engine.d.ts",
+  "unpkg": "./dist/timeline-engine.min.js",
+  "jsdelivr": "./dist/timeline-engine.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/timeline-engine.d.ts",
+      "import": "./dist/timeline-engine.esm.js",
+      "default": "./dist/timeline-engine.esm.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "BUILD_FORMAT=es vite build && BUILD_FORMAT=umd vite build",
+    "dev": "vite",
+    "prod": "vite build --watch",
+    "test": "node --test",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "Cory Schulz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/magic-spells/timeline-engine.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@magic-spells/animation-engine": "^0.1.0",
+    "@magic-spells/event-emitter": "^0.1.0",
+    "@magic-spells/frame-engine": "^1.0.1"
+  },
+  "devDependencies": {
+    "vite": "^8.1.4"
+  }
+}
