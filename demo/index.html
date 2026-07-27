@@ -344,9 +344,11 @@
       background: rgba(0,0,0,0.35);
       overflow: hidden;
     }
+    /* The one place that dips under the demo's 1rem type floor: it's a wide-tracked
+       uppercase disclosure label, not prose, so it stays legible smaller. */
     .code-aside summary {
       cursor: pointer; list-style: none;
-      font-size: 1rem; font-weight: 400; letter-spacing: 0.14em;
+      font-size: 0.9rem; font-weight: 400; letter-spacing: 0.14em;
       text-transform: uppercase; color: var(--text-dim);
       padding: 0.9rem 1.25rem;
       transition: color 0.25s ease;
@@ -1096,6 +1098,13 @@
       .stagger-card { flex: 0 1 34px; border-radius: 7px; }
       .stagger-card b { font-size: 1rem; }
       .stagger-card span { display: none; }
+      /* 04's strip: the clip names eat most of a phone-width row, and the bars
+         are what the section is actually showing. Drop the name gutter and give
+         the tracks the full width — the overlay's left offset has to follow. */
+      .studio-lane { grid-template-columns: 1fr; }
+      .studio-lane .lane-name { display: none; }
+      .strip-head { margin-left: 0; }
+      .strip-overlay { left: 0.9rem; }
       .pop-stage { height: 220px; }
       .fw-sky, .camp-stage { height: 280px; }
       .fw-cloud { height: 20px; }
