@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Timeline Engine — @magic-spells</title>
+  <!-- Inlined as a data URI: a committed .ico would be one more binary in a repo
+       GitHub Pages serves verbatim, and the browser's automatic /favicon.ico
+       request 404s without it. A keyframe diamond on a playhead track. -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2306090d'/%3E%3Cpath d='M4 16h24' stroke='%2337857a' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M16 6.5l6.4 9.5-6.4 9.5-6.4-9.5z' fill='%235ecabb'/%3E%3C/svg%3E" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -754,7 +758,7 @@
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ---- 07 Sigil: hover-scrubbed studio preview ---- */
+    /* ---- 07 Fireworks: hover-scrubbed studio preview ---- */
     /* The whole panel is the scrub surface — stage and strip both. Cursor X
        across it maps to the playhead, so there's no separate "handle" to find. */
     .studio {
@@ -766,71 +770,176 @@
       touch-action: pan-y;
     }
 
-    .sigil-stage {
+    .fw-sky {
       position: relative;
       height: 340px;
       overflow: hidden;
       background:
-        radial-gradient(ellipse at 50% 58%, rgba(94,202,187,0.05), transparent 60%),
-        linear-gradient(170deg, rgba(255,255,255,0.014), rgba(0,0,0,0.28));
+        radial-gradient(ellipse at 50% 112%, rgba(94,202,187,0.09), transparent 52%),
+        linear-gradient(180deg, #03060d 0%, #07101d 62%, #0b1720 100%);
     }
-    /* Every stage object is centred by default; clips animate transform on top
-       of that, so each keyframe carries its own translate(-50%,-50%). */
-    .sigil-stage > * { position: absolute; left: 50%; top: 52%; }
 
-    .sig-aura {
-      width: 340px; height: 340px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(94,202,187,0.22), rgba(94,202,187,0.05) 45%, transparent 70%);
-      filter: blur(6px);
-    }
-    .sig-ring, .sig-arc {
+    .fw-star {
+      position: absolute;
+      width: var(--star-size); height: var(--star-size);
       border-radius: 50%;
-      border: 1px solid transparent;
-    }
-    .sig-ring {
-      width: 226px; height: 226px;
-      border-color: rgba(94,202,187,0.42);
-      box-shadow: 0 0 26px rgba(94,202,187,0.12), inset 0 0 26px rgba(94,202,187,0.07);
-    }
-    .sig-arc {
-      width: 152px; height: 152px;
-      border-top-color: var(--amber);
-      border-right-color: rgba(217,164,65,0.34);
+      background: var(--cream);
+      box-shadow: 0 0 5px rgba(230,234,230,0.55);
+      opacity: 0;
+      will-change: transform, opacity;
     }
 
-    /* The wrapper owns the circle placement (a calc() with vars, set once from
-       JS and never animated); the inner <i> is what the clip tweens, so the
-       interpolated transform stays plain numeric tokens. */
-    .sig-rune {
-      transform: translate(calc(-50% + var(--rx)), calc(-50% + var(--ry)));
-    }
-    .sig-rune i {
-      display: grid; place-items: center;
-      width: 30px; height: 30px;
-      font-family: var(--font-display);
-      font-size: 1.05rem;
-      font-style: normal;
-      color: var(--cream);
-      border: 1px solid var(--border-accent);
-      border-radius: 8px;
-      background: rgba(10,16,22,0.82);
+    .fw-cloud {
+      position: absolute;
+      width: var(--cloud-w); height: 28px;
+      border-radius: 50%;
+      background: rgba(134,181,232,0.07);
+      filter: blur(10px);
+      opacity: 0;
+      will-change: transform, opacity;
     }
 
-    .sig-core {
-      width: 54px; height: 54px; border-radius: 50%;
-      background: radial-gradient(circle at 38% 34%, #cdfff4, var(--teal) 42%, var(--teal-dim) 78%);
-      box-shadow: 0 0 30px rgba(94,202,187,0.5);
-    }
-    /* The call() at 1750 toggles this — a flash, not an animation, so it
-       stays out of the scrubbed path entirely. */
-    .sig-core.flash {
-      box-shadow: 0 0 18px rgba(94,202,187,0.5), 0 0 70px 20px rgba(230,234,230,0.55);
+    .fw-shell { position: absolute; }
+    .fw-shell > * { position: absolute; left: 0; top: 0; }
+
+    .fw-trail {
+      width: 3px; height: 48px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #fff, var(--amber) 20%, rgba(217,164,65,0));
+      box-shadow: 0 0 8px rgba(217,164,65,0.7);
+      transform-origin: center top;
+      opacity: 0;
+      will-change: transform, opacity;
     }
 
-    .sig-beam {
-      width: 300px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--cream), transparent);
-      box-shadow: 0 0 14px rgba(230,234,230,0.6);
+    .fw-flash {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 28px 8px rgba(255,255,255,0.85), 0 0 70px 22px rgba(217,164,65,0.34);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .fw-flash.called { filter: brightness(1.7); }
+
+    /* The wrapper's rotate comes last, so --g always falls in world-space while
+       the inner spark travels out along its rotated spoke. */
+    .fw-spark {
+      width: 0; height: 0;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .fw-spark i {
+      display: block;
+      width: var(--spark-size); height: var(--spark-size);
+      border-radius: 50%;
+      background: hsl(var(--hue) 92% 72%);
+      box-shadow: 0 0 8px hsl(var(--hue) 92% 65%);
+      transform: translateX(calc(var(--r) * var(--spread))) scale(var(--spark-scale));
+      will-change: transform;
+    }
+
+    /* ---- 08 Campfire: four coprime looping timelines ---- */
+    .camp-stage {
+      height: 340px;
+      background: #03060b;
+    }
+    .camp-sky {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 112%, rgba(217,164,65,0.09), transparent 45%),
+        linear-gradient(180deg, #03060c 0%, #07101a 68%, #0a1215 100%);
+    }
+    .camp-pines { position: absolute; inset: 0; }
+    .pine {
+      position: absolute;
+      bottom: 20%;
+      left: var(--pine-x);
+      width: var(--pine-w); height: var(--pine-h);
+      transform-origin: 50% 100%;
+      clip-path: polygon(50% 0%, 70% 30%, 61% 30%, 82% 60%, 69% 60%, 100% 100%, 0 100%, 31% 60%, 18% 60%, 39% 30%, 30% 30%);
+      background: var(--pine-color);
+      opacity: var(--pine-opacity);
+      will-change: transform;
+    }
+    .camp-glow {
+      position: absolute;
+      left: 50%; top: 84%;
+      width: 390px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(217,164,65,0.28), rgba(224,138,111,0.08) 42%, transparent 72%);
+      filter: blur(5px);
+      will-change: transform, opacity;
+    }
+    .camp-fire {
+      position: absolute;
+      left: 50%; bottom: 42px;
+      width: 190px; height: 220px;
+      transform: translateX(-50%);
+    }
+    .camp-logs {
+      position: absolute;
+      left: 50%; bottom: 0;
+      width: 126px; height: 30px;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+    .camp-logs i {
+      position: absolute;
+      left: 4px; top: 7px;
+      width: 118px; height: 18px;
+      border-radius: 9px;
+      background: linear-gradient(180deg, #75452f, #321d18);
+      border: 1px solid rgba(217,164,65,0.2);
+      transform: rotate(13deg);
+    }
+    .camp-logs i + i { transform: rotate(-13deg); }
+    .flame {
+      position: absolute;
+      left: 50%; bottom: 23px;
+      border-radius: 55% 45% 58% 42% / 68% 64% 36% 32%;
+      transform-origin: 50% 100%;
+      mix-blend-mode: screen;
+      will-change: transform, opacity;
+    }
+    .flame-outer {
+      width: 100px; height: 158px;
+      background: linear-gradient(0deg, rgba(217,164,65,0.88), rgba(224,138,111,0.46) 56%, transparent 100%);
+      filter: blur(2px);
+      z-index: 1;
+    }
+    .flame-mid {
+      width: 75px; height: 127px;
+      background: linear-gradient(0deg, #f2b64d, #e77a36 62%, transparent 100%);
+      z-index: 2;
+    }
+    .flame-inner {
+      width: 50px; height: 94px;
+      background: linear-gradient(0deg, #fff4c3, #f5c557 64%, transparent 100%);
+      z-index: 3;
+    }
+    .flame-core {
+      width: 28px; height: 60px;
+      background: linear-gradient(0deg, #ffffff, #ffeaa2 72%, transparent 100%);
+      filter: blur(1px);
+      z-index: 3;
+    }
+    .camp-embers {
+      position: absolute;
+      left: 50%; bottom: 48px;
+      width: 0; height: 0;
+      z-index: 5;
+    }
+    .ember {
+      position: absolute;
+      left: var(--ember-x); bottom: 0;
+      width: var(--ember-size); height: var(--ember-size);
+      border-radius: 50%;
+      background: hsl(var(--ember-hue) 96% 66%);
+      box-shadow: 0 0 8px hsl(var(--ember-hue) 96% 58%);
+      transform: translateX(var(--ember-tx)) translateY(var(--ember-ty)) scale(var(--ember-scale));
+      opacity: 0;
+      will-change: transform, opacity;
     }
 
     /* ---- the strip ---- */
@@ -922,12 +1031,10 @@
       .stagger-card b { font-size: 1rem; }
       .stagger-card span { display: none; }
       .pop-stage { height: 220px; }
-      .sigil-stage { height: 260px; }
-      .sig-aura { width: 240px; height: 240px; }
-      .sig-ring { width: 168px; height: 168px; }
-      .sig-arc { width: 112px; height: 112px; }
-      .sig-beam { width: 220px; }
-      .sig-rune { width: 25px; height: 25px; margin: -12.5px 0 0 -12.5px; font-size: 0.9rem; }
+      .fw-sky, .camp-stage { height: 280px; }
+      .fw-cloud { height: 20px; }
+      .camp-fire { bottom: 28px; transform: translateX(-50%) scale(0.82); transform-origin: 50% 100%; }
+      .camp-glow { width: 290px; }
     }
   </style>
 </head>
@@ -1394,16 +1501,10 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
         <h2>Your cursor is the playhead</h2>
         <span class="demo-tag clock">hover · scrub · play</span>
       </div>
-      <p class="demo-desc">No scroll here — <code>scrollDriver</code> is just one way to pick a number. Sweep across the panel and cursor X <em>is</em> the playhead; the strip below is drawn from the same clip list that built the timeline, lit where a clip is actually interpolating and dimmed where it's only holding a fill frame. Pull the cursor away and <code>play()</code> picks it up from exactly where you left it. Hover again to take it back mid-flight.</p>
+      <p class="demo-desc">No scroll and no physics here — cursor X <em>is</em> the playhead, so sweep backwards and every firework implodes while its mortar drops back to earth. The strip below is drawn from the same clip list that built the timeline, lit where a clip is actually interpolating and dimmed where it's only holding a fill frame. Pull the cursor away and <code>play()</code> picks it up from exactly where you left it.</p>
 
       <div class="studio" id="studio">
-        <div class="sigil-stage" id="sigil-stage">
-          <div class="sig-aura" id="sig-aura"></div>
-          <div class="sig-ring" id="sig-ring"></div>
-          <div class="sig-arc" id="sig-arc"></div>
-          <div class="sig-core" id="sig-core"></div>
-          <div class="sig-beam" id="sig-beam"></div>
-        </div>
+        <div class="fw-sky" id="fw-sky"></div>
 
         <div class="studio-strip">
           <div class="strip-head">
@@ -1417,63 +1518,149 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
 
       <details class="code-aside">
         <summary>view the hover driver + clip list</summary>
-        <pre><code><span class="cm">// A driver is just "pick a time, call seek". ~14 lines, no library support</span>
-<span class="cm">// needed — this is the same shape a timeline editor's playhead would use.</span>
-<span class="cm">//</span>
-<span class="cm">// `el` is the surface you can hover (the whole panel); `range` is what x maps</span>
-<span class="cm">// against — the playhead's own coordinate space, so cursor and playhead line up</span>
-<span class="cm">// exactly instead of being a label-gutter apart. smoothing is a time-constant</span>
-<span class="cm">// in ms; 20 reads as immediate but still filters pointer jitter.</span>
-<span class="kw">function</span> <span class="fn">hoverDriver</span>(tl, el, { range = el, smoothing = <span class="num">20</span> } = {}) {
-  <span class="kw">let</span> target = <span class="num">0</span>, holding = <span class="kw">false</span>;
+        <pre><code><span class="cm">// A driver is just "pick a time, call seek". This reads clientX;</span>
+<span class="cm">// nothing in Timeline knows the difference.</span>
+<span class="kw">function</span> <span class="fn">hoverDriver</span>(tl, el, { range = el, smoothing = <span class="num">20</span>, onOwner } = {}) {
+  <span class="kw">let</span> target = <span class="num">0</span>;
+  <span class="kw">let</span> holding = <span class="kw">false</span>;
 
   el.<span class="fn">addEventListener</span>(<span class="str">'pointermove'</span>, (e) =&gt; {
-    <span class="kw">const</span> r = range.<span class="fn">getBoundingClientRect</span>();
-    <span class="cm">// Store a number only — the ticker does the seeking, so pointermove</span>
-    <span class="cm">// can fire as fast as it likes and we still scrub once per frame.</span>
-    target = <span class="fn">clamp</span>((e.clientX - r.left) / r.width) * tl.duration;
-    <span class="kw">if</span> (!holding) { tl.<span class="fn">pause</span>(); holding = <span class="kw">true</span>; }
+    <span class="kw">const</span> rect = range.<span class="fn">getBoundingClientRect</span>();
+    target = <span class="fn">clamp01</span>((e.clientX - rect.left) / rect.width) * tl.duration;
+    <span class="kw">if</span> (!holding) {
+      holding = <span class="kw">true</span>;
+      tl.<span class="fn">pause</span>();
+      onOwner?.(<span class="kw">true</span>);
+    }
   });
 
   el.<span class="fn">addEventListener</span>(<span class="str">'pointerleave'</span>, () =&gt; {
+    <span class="kw">if</span> (!holding) <span class="kw">return</span>;
     holding = <span class="kw">false</span>;
-    tl.<span class="fn">play</span>();   <span class="cm">// resumes from the current playhead — no reset</span>
+    onOwner?.(<span class="kw">false</span>);
+    tl.<span class="fn">play</span>(); <span class="cm">// resumes from the current playhead</span>
   });
 
-  ticker.<span class="fn">subscribe</span>((dt) =&gt; {
+  ticker.<span class="fn">subscribe</span>((delta) =&gt; {
     <span class="kw">if</span> (!holding) <span class="kw">return</span>;
-    <span class="kw">const</span> k = <span class="num">1</span> - Math.<span class="fn">exp</span>(-dt / smoothing);
+    <span class="kw">const</span> k = <span class="num">1</span> - Math.<span class="fn">exp</span>(-delta / smoothing);
     tl.<span class="fn">seek</span>(tl.<span class="fn">time</span>() + (target - tl.<span class="fn">time</span>()) * k);
   });
 }
 
-<span class="cm">// One list builds the timeline AND draws the strip — the studio-app shape.</span>
+<span class="cm">// One list builds the scrubbed timeline AND draws the strip.</span>
 <span class="kw">const</span> sigilClips = [
-  { <span class="prop">name</span>: <span class="str">'aura'</span>,  <span class="prop">target</span>: <span class="str">'#sig-aura'</span>, <span class="prop">at</span>: <span class="num">0</span>,    <span class="prop">duration</span>: <span class="num">1400</span>, <span class="prop">easing</span>: <span class="str">'linear'</span>,   <span class="prop">keyframes</span>: {…} },
-  { <span class="prop">name</span>: <span class="str">'ring'</span>,  <span class="prop">target</span>: <span class="str">'#sig-ring'</span>, <span class="prop">at</span>: <span class="num">100</span>,  <span class="prop">duration</span>: <span class="num">900</span>,  <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: {…} },
-  { <span class="prop">name</span>: <span class="str">'arc'</span>,   <span class="prop">target</span>: <span class="str">'#sig-arc'</span>,  <span class="prop">at</span>: <span class="num">250</span>,  <span class="prop">duration</span>: <span class="num">900</span>,  <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: {…} },
-  { <span class="prop">name</span>: <span class="str">'runes'</span>, <span class="prop">target</span>: <span class="str">'.sig-rune'</span>, <span class="prop">at</span>: <span class="num">500</span>,  <span class="prop">duration</span>: <span class="num">700</span>,  <span class="prop">stagger</span>: <span class="num">90</span>,        <span class="prop">keyframes</span>: {…} },
-  { <span class="prop">name</span>: <span class="str">'core'</span>,  <span class="prop">target</span>: <span class="str">'#sig-core'</span>, <span class="prop">at</span>: <span class="num">700</span>,  <span class="prop">duration</span>: <span class="num">600</span>,  <span class="prop">easing</span>: <span class="str">'back-out'</span>, <span class="prop">keyframes</span>: {…} },
-  <span class="cm">// Second clip on the SAME element, starting after the first has ended.</span>
-  <span class="cm">// It wins while it runs; the moment it stops, 'core' is holding a fill</span>
-  <span class="cm">// frame and loses to nothing. Active always beats fill.</span>
-  { <span class="prop">name</span>: <span class="str">'core pulse'</span>, <span class="prop">target</span>: <span class="str">'#sig-core'</span>, <span class="prop">at</span>: <span class="num">1500</span>, <span class="prop">duration</span>: <span class="num">900</span>, <span class="prop">keyframes</span>: {…} },
-  { <span class="prop">name</span>: <span class="str">'beam'</span>,  <span class="prop">target</span>: <span class="str">'#sig-beam'</span>,  <span class="prop">at</span>: <span class="num">1350</span>, <span class="prop">duration</span>: <span class="num">850</span>, <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'stars'</span>, <span class="prop">target</span>: <span class="str">'.fw-star'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">2600</span>, <span class="prop">easing</span>: <span class="str">'linear'</span>, <span class="prop">stagger</span>: <span class="num">28</span>, <span class="prop">keyframes</span>: {…} },
+  { <span class="prop">name</span>: <span class="str">'clouds'</span>, <span class="prop">target</span>: <span class="str">'.fw-cloud'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">3000</span>, <span class="prop">easing</span>: <span class="str">'linear'</span>, <span class="prop">stagger</span>: <span class="num">90</span>, <span class="prop">keyframes</span>: {…} },
 ];
+
+<span class="kw">const</span> shellStarts = [<span class="num">0</span>, <span class="num">850</span>, <span class="num">1600</span>];
+shellStarts.<span class="fn">forEach</span>((at, i) =&gt; {
+  <span class="kw">const</span> shell = <span class="str">`.fw-shell-${i + 1}`</span>;
+  <span class="kw">const</span> burstAt = at + <span class="num">620</span>;
+  sigilClips.<span class="fn">push</span>(
+    { <span class="prop">name</span>: <span class="str">'trail'</span>, <span class="prop">target</span>: <span class="str">`${shell} .fw-trail`</span>, <span class="prop">at</span>, <span class="prop">duration</span>: <span class="num">620</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">keyframes</span>: {…} },
+    { <span class="prop">name</span>: <span class="str">'flash'</span>, <span class="prop">target</span>: <span class="str">`${shell} .fw-flash`</span>, <span class="prop">at</span>: burstAt, <span class="prop">duration</span>: <span class="num">260</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">accent</span>: <span class="kw">true</span>, <span class="prop">keyframes</span>: {…} },
+    { <span class="prop">name</span>: <span class="str">'sparks radial'</span>, <span class="prop">target</span>: <span class="str">`${shell} .fw-spark i`</span>, <span class="prop">at</span>: burstAt, <span class="prop">duration</span>: <span class="num">900</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">stagger</span>: <span class="num">7</span>,
+      <span class="prop">keyframes</span>: { <span class="num">0</span>: { <span class="str">'--r'</span>: <span class="str">'0px'</span>, <span class="str">'--spark-scale'</span>: <span class="str">'1'</span>, <span class="str">'--hue'</span>: <span class="fn">rand</span>(<span class="num">12</span>, <span class="num">320</span>) },
+                   <span class="num">100</span>: { <span class="str">'--r'</span>: <span class="fn">rand</span>(<span class="num">96</span>, <span class="num">154</span>, <span class="str">'px'</span>), <span class="str">'--spark-scale'</span>: <span class="str">'0.4'</span> } } },
+    { <span class="prop">name</span>: <span class="str">'sparks fall'</span>, <span class="prop">target</span>: <span class="str">`${shell} .fw-spark`</span>, <span class="prop">at</span>: burstAt, <span class="prop">duration</span>: <span class="num">900</span>, <span class="prop">easing</span>: <span class="str">'ease-in'</span>, <span class="prop">stagger</span>: <span class="num">7</span>,
+      <span class="prop">keyframes</span>: { <span class="num">0</span>: { <span class="str">'--g'</span>: <span class="str">'0px'</span>, <span class="prop">opacity</span>: <span class="str">'0.95'</span> }, <span class="num">18</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span> }, <span class="num">72</span>: { <span class="prop">opacity</span>: <span class="str">'0.82'</span> },
+                   <span class="num">100</span>: { <span class="str">'--g'</span>: <span class="fn">rand</span>(<span class="num">56</span>, <span class="num">108</span>, <span class="str">'px'</span>), <span class="prop">opacity</span>: <span class="str">'0'</span> } } },
+  );
+});
 
 <span class="kw">const</span> sigilTl = <span class="fn">timeline</span>({ <span class="prop">defaults</span>: { <span class="prop">easing</span>: <span class="str">'ease-in-out'</span> } });
 sigilClips.<span class="fn">forEach</span>((c) =&gt; sigilTl.<span class="fn">tween</span>(c.target, c.keyframes, c));
 
-<span class="cm">// The beam crossing the core. direction: 1 so scrubbing back doesn't re-fire it.</span>
-sigilTl.<span class="fn">call</span>(() =&gt; <span class="fn">flashCore</span>(), { <span class="prop">at</span>: <span class="num">1750</span>, <span class="prop">direction</span>: <span class="num">1</span> });
+<span class="kw">const</span> burstTimers = [<span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>];
+shellStarts.<span class="fn">forEach</span>((at, i) =&gt; {
+  sigilTl.<span class="fn">call</span>(() =&gt; {
+    <span class="kw">const</span> flash = $(<span class="str">`.fw-shell-${i + 1} .fw-flash`</span>);
+    flash.classList.<span class="fn">add</span>(<span class="str">'called'</span>);
+    <span class="fn">clearTimeout</span>(burstTimers[i]);
+    burstTimers[i] = <span class="fn">setTimeout</span>(() =&gt; flash.classList.<span class="fn">remove</span>(<span class="str">'called'</span>), <span class="num">180</span>);
+  }, { <span class="prop">at</span>: at + <span class="num">620</span>, <span class="prop">direction</span>: <span class="num">1</span> });
+});
 
-<span class="fn">hoverDriver</span>(sigilTl, $(<span class="str">'#studio'</span>));
+<span class="fn">hoverDriver</span>(sigilTl, $(<span class="str">'#studio'</span>), {
+  <span class="prop">range</span>: $(<span class="str">'#studio-range'</span>),
+  <span class="prop">onOwner</span>: (isCursor) =&gt; {
+    sigilOwner.textContent = isCursor ? <span class="str">'▮ cursor'</span> : <span class="str">'▶ clock'</span>;
+    sigilOwner.classList.<span class="fn">toggle</span>(<span class="str">'is-cursor'</span>, isCursor);
+  },
+});
 sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span class="cm">// paint the start state; nothing is written until this</span>
 
-<span class="cm">// Everything starts at opacity 0, so at rest the stage is simply empty. Play it</span>
-<span class="cm">// through once on arrival so it settles assembled and invites the scrub —</span>
-<span class="cm">// hovering mid-flight just pauses it and takes over.</span>
-<span class="fn">viewTrigger</span>(<span class="str">'#sec-studio'</span>, { <span class="prop">enter</span>: () =&gt; sigilTl.<span class="fn">play</span>(), <span class="prop">once</span>: <span class="kw">true</span>, <span class="prop">threshold</span>: <span class="num">0.35</span> });</code></pre>
+<span class="fn">viewTrigger</span>(<span class="str">'#sec-studio'</span>, {
+  <span class="prop">enter</span>: () =&gt; sigilTl.<span class="fn">play</span>(),
+  <span class="prop">once</span>: <span class="kw">true</span>,
+  <span class="prop">threshold</span>: <span class="num">0.35</span>,
+});</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 08 Looping timelines ---- -->
+    <section class="demo-section" id="sec-fire">
+      <div class="demo-header">
+        <span class="demo-index">08</span>
+        <h2>A timeline that never ends</h2>
+        <span class="demo-tag clock">clock · loop</span>
+      </div>
+      <p class="demo-desc">A single loop eventually gives itself away. This fire is four <code>loop: true</code> timelines on the shared ticker — flames at 1700ms, embers at 2300ms, pines at 5300ms and glow at 1300ms. Their coprime rhythms only realign after roughly 7.5 hours, so the composite never visibly repeats. Leaving the viewport pauses all four; returning resumes them from their own playheads.</p>
+
+      <div class="stage camp-stage" id="camp-stage">
+        <div class="camp-sky"></div>
+        <div class="camp-pines" id="camp-pines"></div>
+        <div class="camp-glow" id="camp-glow"></div>
+        <div class="camp-fire">
+          <div class="camp-embers" id="camp-embers"></div>
+          <div class="camp-logs"><i></i><i></i></div>
+          <i class="flame flame-outer"></i>
+          <i class="flame flame-mid"></i>
+          <i class="flame flame-inner"></i>
+          <i class="flame flame-core"></i>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the four looping timelines</summary>
+        <pre><code><span class="cm">// Stagger is included in duration: clip duration + (count - 1) × stagger.</span>
+<span class="kw">const</span> flameClip = {
+  <span class="prop">name</span>: <span class="str">'flames'</span>, <span class="prop">target</span>: <span class="str">'.flame'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">1580</span>, <span class="prop">easing</span>: <span class="str">'ease-in-out'</span>, <span class="prop">stagger</span>: <span class="num">40</span>,
+  <span class="prop">keyframes</span>: {…},   <span class="cm">// 1580 + 3 × 40 = 1700ms</span>
+};
+<span class="kw">const</span> emberClip = {
+  <span class="prop">name</span>: <span class="str">'embers'</span>, <span class="prop">target</span>: <span class="str">'.ember'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">1530</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>, <span class="prop">stagger</span>: <span class="num">70</span>,
+  <span class="prop">keyframes</span>: {…},   <span class="cm">// 1530 + 11 × 70 = 2300ms</span>
+};
+<span class="kw">const</span> pineClip = {
+  <span class="prop">name</span>: <span class="str">'pines'</span>, <span class="prop">target</span>: <span class="str">'.pine'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">5000</span>, <span class="prop">easing</span>: <span class="str">'ease-in-out'</span>, <span class="prop">stagger</span>: <span class="num">50</span>,
+  <span class="prop">keyframes</span>: {…},   <span class="cm">// 5000 + 6 × 50 = 5300ms</span>
+};
+<span class="kw">const</span> glowClip = {
+  <span class="prop">name</span>: <span class="str">'glow'</span>, <span class="prop">target</span>: <span class="str">'#camp-glow'</span>, <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">1300</span>, <span class="prop">easing</span>: <span class="str">'ease-in-out'</span>, <span class="prop">stagger</span>: <span class="num">0</span>,
+  <span class="prop">keyframes</span>: {…},
+};
+
+<span class="kw">const</span> loopTimeline = (clip) =&gt; {
+  <span class="kw">const</span> tl = <span class="fn">timeline</span>({ <span class="prop">loop</span>: <span class="kw">true</span> });
+  tl.<span class="fn">tween</span>(clip.target, clip.keyframes, clip);
+  <span class="kw">return</span> <span class="fn">countTimeline</span>(tl, <span class="num">1</span>);
+};
+
+<span class="kw">const</span> flamesTl = <span class="fn">loopTimeline</span>(flameClip);
+<span class="kw">const</span> embersTl = <span class="fn">loopTimeline</span>(emberClip);
+<span class="kw">const</span> pinesTl = <span class="fn">loopTimeline</span>(pineClip);
+<span class="kw">const</span> glowTl = <span class="fn">loopTimeline</span>(glowClip);
+<span class="kw">const</span> fireTimelines = [flamesTl, embersTl, pinesTl, glowTl];
+
+fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">progress</span>(<span class="num">0</span>));
+
+<span class="kw">const</span> playFire = () =&gt; fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">play</span>());
+<span class="kw">const</span> pauseFire = () =&gt; fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">pause</span>());
+
+<span class="fn">viewTrigger</span>(<span class="str">'#sec-fire'</span>, { <span class="prop">enter</span>: playFire, <span class="prop">leave</span>: pauseFire });</code></pre>
       </details>
     </section>
 
@@ -1497,7 +1684,7 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
        timelines untouched. One bundle, one ticker. -->
   <script src="../dist/timeline-engine.min.js"></script>
   <script type="module">
-    const { timeline, scrollDriver, viewTrigger, scene, ticker } = TimelineEngine;
+    const { timeline, scrollDriver, viewTrigger, scene, ticker, rand } = TimelineEngine;
 
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -1858,94 +2045,146 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
     // 07 — Your cursor is the playhead (hover-scrubbed studio preview)
     // ============================================================
 
-    // Five runes laid out around the ring. The wrapper carries the circle
-    // placement so the clip only ever animates the inner <i>.
-    const RUNES = ['Ψ', 'Δ', 'Φ', 'Ω', 'Θ'];
-    const sigilStage = $('#sigil-stage');
-    const sigilCore = $('#sig-core');
-    RUNES.forEach((glyph, i) => {
-      const angle = (-90 + i * (360 / RUNES.length)) * (Math.PI / 180);
-      const rune = document.createElement('div');
-      rune.className = 'sig-rune';
-      rune.style.setProperty('--rx', `${Math.cos(angle) * 113}px`);
-      rune.style.setProperty('--ry', `${Math.sin(angle) * 113}px`);
-      rune.innerHTML = `<i>${glyph}</i>`;
-      // Before the core so the runes sit behind it, not over it.
-      sigilStage.insertBefore(rune, sigilCore);
+    // Static sky and particle variation use the same seeded LCG pattern as the
+    // hero starfield. The timeline only owns values that should be scrubbed.
+    const fireworkStage = $('#fw-sky');
+    let fireworkSeed = 8072026;
+    const fireworkRnd = () => ((fireworkSeed = (fireworkSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+
+    for (let i = 0; i < 22; i += 1) {
+      const star = document.createElement('i');
+      star.className = 'fw-star';
+      star.style.left = `${(fireworkRnd() * 100).toFixed(2)}%`;
+      star.style.top = `${(fireworkRnd() * 70).toFixed(2)}%`;
+      star.style.setProperty('--star-size', `${(1 + fireworkRnd() * 1.6).toFixed(2)}px`);
+      fireworkStage.appendChild(star);
+    }
+
+    for (let i = 0; i < 3; i += 1) {
+      const cloud = document.createElement('i');
+      cloud.className = 'fw-cloud';
+      cloud.style.left = `${(-8 + i * 38 + fireworkRnd() * 9).toFixed(2)}%`;
+      cloud.style.top = `${(18 + fireworkRnd() * 38).toFixed(2)}%`;
+      cloud.style.setProperty('--cloud-w', `${Math.round(130 + fireworkRnd() * 100)}px`);
+      fireworkStage.appendChild(cloud);
+    }
+
+    const shellPositions = [
+      { left: '25%', top: '43%' },
+      { left: '51%', top: '31%' },
+      { left: '76%', top: '49%' },
+    ];
+
+    shellPositions.forEach((position, shellIndex) => {
+      const shell = document.createElement('div');
+      shell.className = `fw-shell fw-shell-${shellIndex + 1}`;
+      shell.style.left = position.left;
+      shell.style.top = position.top;
+
+      const trail = document.createElement('i');
+      trail.className = 'fw-trail';
+      const flash = document.createElement('i');
+      flash.className = 'fw-flash';
+      shell.append(trail, flash);
+
+      for (let sparkIndex = 0; sparkIndex < 16; sparkIndex += 1) {
+        const spark = document.createElement('span');
+        const angle = sparkIndex * (360 / 16) + (fireworkRnd() - 0.5) * 9;
+        spark.className = 'fw-spark';
+        spark.style.setProperty('--g', '0px');
+        spark.style.setProperty('--angle', `${angle.toFixed(2)}deg`);
+        spark.style.setProperty('--spread', (0.78 + fireworkRnd() * 0.44).toFixed(3));
+        spark.style.setProperty('--spark-size', `${(2 + fireworkRnd() * 2.4).toFixed(2)}px`);
+        spark.style.transform = 'translate(-50%, -50%) translateY(var(--g)) rotate(var(--angle))';
+
+        const particle = document.createElement('i');
+        particle.style.setProperty('--r', '0px');
+        particle.style.setProperty('--spark-scale', '1');
+        particle.style.setProperty('--hue', '42');
+        spark.appendChild(particle);
+        shell.appendChild(spark);
+      }
+
+      fireworkStage.appendChild(shell);
     });
 
-    // Centred children each carry their own translate(-50%,-50%), and every
-    // keyframe repeats the same transform token order — that's what keeps the
-    // interpolation a straight numeric lerp.
+    // Ambient clips share the scrubbed timeline with the shells: stop the
+    // cursor and the whole sky freezes, which makes the pure-time model visible.
     const sigilClips = [
       {
-        name: 'aura', target: '#sig-aura', at: 0, duration: 1400, easing: 'linear',
+        name: 'stars', target: '.fw-star', at: 0, duration: 2600, easing: 'linear', stagger: 28,
         keyframes: {
-          0: { opacity: '0', transform: 'translate(-50%, -50%) scale(0.6)' },
-          100: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+          0: { opacity: '0.24', transform: 'scale(0.82)' },
+          45: { opacity: '0.58', transform: 'scale(1)' },
+          100: { opacity: '0.3', transform: 'scale(0.88)' },
         },
       },
       {
-        name: 'ring', target: '#sig-ring', at: 100, duration: 900, easing: 'ease-out',
+        name: 'clouds', target: '.fw-cloud', at: 0, duration: 3000, easing: 'linear', stagger: 90,
         keyframes: {
-          0: { opacity: '0', transform: 'translate(-50%, -50%) rotate(-120deg) scale(0.55)' },
-          100: { opacity: '1', transform: 'translate(-50%, -50%) rotate(0deg) scale(1)' },
-        },
-      },
-      {
-        name: 'arc', target: '#sig-arc', at: 250, duration: 900, easing: 'ease-out',
-        keyframes: {
-          0: { opacity: '0', transform: 'translate(-50%, -50%) rotate(150deg) scale(0.4)' },
-          100: { opacity: '1', transform: 'translate(-50%, -50%) rotate(-30deg) scale(1)' },
-        },
-      },
-      {
-        name: 'runes', target: '.sig-rune i', at: 500, duration: 700, easing: 'back-out', stagger: 90,
-        keyframes: {
-          0: { opacity: '0', transform: 'translateY(14px) scale(0.2)' },
-          100: { opacity: '1', transform: 'translateY(0px) scale(1)' },
-        },
-      },
-      {
-        name: 'core', target: '#sig-core', at: 700, duration: 600, easing: 'back-out',
-        keyframes: {
-          0: { opacity: '0', transform: 'translate(-50%, -50%) scale(0)' },
-          100: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
-        },
-      },
-      {
-        // Second clip on the same element, starting well after 'core' has ended.
-        // It sets no opacity — that still comes from 'core' holding its end
-        // fill frame, while the transform comes from here. Active beats fill.
-        name: 'core pulse', target: '#sig-core', at: 1500, duration: 900, accent: true,
-        keyframes: {
-          0: { transform: 'translate(-50%, -50%) scale(1)' },
-          50: { transform: 'translate(-50%, -50%) scale(1.32)' },
-          100: { transform: 'translate(-50%, -50%) scale(1)' },
-        },
-      },
-      {
-        name: 'beam', target: '#sig-beam', at: 1350, duration: 850,
-        keyframes: {
-          0: { opacity: '0', transform: 'translate(-50%, -50%) translateX(-180px) scaleX(0.15)' },
-          50: { opacity: '1', transform: 'translate(-50%, -50%) translateX(0px) scaleX(1)' },
-          100: { opacity: '0', transform: 'translate(-50%, -50%) translateX(180px) scaleX(0.15)' },
+          0: { opacity: '0.12', transform: 'translateX(-50px) scale(0.94)' },
+          100: { opacity: '0.22', transform: 'translateX(70px) scale(1.06)' },
         },
       },
     ];
+
+    const shellStarts = [0, 850, 1600];
+    shellStarts.forEach((at, i) => {
+      const shell = `.fw-shell-${i + 1}`;
+      const burstAt = at + 620;
+
+      sigilClips.push(
+        {
+          name: 'trail', target: `${shell} .fw-trail`, at, duration: 620, easing: 'ease-out',
+          keyframes: {
+            0: { opacity: '0', transform: 'translate(-50%, -50%) translateY(190px) scaleY(0.45)' },
+            12: { opacity: '1', transform: 'translate(-50%, -50%) translateY(174px) scaleY(1)' },
+            82: { opacity: '1', transform: 'translate(-50%, -50%) translateY(7px) scaleY(0.72)' },
+            100: { opacity: '0', transform: 'translate(-50%, -50%) translateY(0px) scaleY(0.3)' },
+          },
+        },
+        {
+          name: 'flash', target: `${shell} .fw-flash`, at: burstAt, duration: 260, easing: 'ease-out', accent: true,
+          keyframes: {
+            0: { opacity: '1', transform: 'translate(-50%, -50%) scale(0)' },
+            100: { opacity: '0', transform: 'translate(-50%, -50%) scale(1.6)' },
+          },
+        },
+        {
+          name: 'sparks radial', target: `${shell} .fw-spark i`, at: burstAt, duration: 900, easing: 'ease-out', stagger: 7,
+          keyframes: {
+            0: { '--r': '0px', '--spark-scale': '1', '--hue': rand(12, 320) },
+            100: { '--r': rand(96, 154, 'px'), '--spark-scale': '0.4' },
+          },
+        },
+        {
+          name: 'sparks fall', target: `${shell} .fw-spark`, at: burstAt, duration: 900, easing: 'ease-in', stagger: 7,
+          keyframes: {
+            0: { '--g': '0px', opacity: '0.95' },
+            18: { opacity: '1' },
+            72: { opacity: '0.82' },
+            100: { '--g': rand(56, 108, 'px'), opacity: '0' },
+          },
+        },
+      );
+    });
 
     const sigilTl = timeline({ defaults: { easing: 'ease-in-out' } });
     // Each clip config doubles as the opts object — `name`/`target`/`keyframes`
     // are simply ignored by tween(), so one list drives the timeline and the strip.
     sigilClips.forEach((c) => sigilTl.tween(c.target, c.keyframes, c));
 
-    // The beam reaches the core at its 50% key: 1350 + 850/2.
-    let flashTimer = 0;
-    sigilTl.call(() => {
-      sigilCore.classList.add('flash');
-      clearTimeout(flashTimer);
-      flashTimer = setTimeout(() => sigilCore.classList.remove('flash'), 260);
-    }, { at: 1775, direction: 1 });
+    // Crossing callbacks are forward-only, so rewinding implodes the shells
+    // without re-firing real-time side effects.
+    const burstTimers = [0, 0, 0];
+    shellStarts.forEach((at, i) => {
+      sigilTl.call(() => {
+        const flash = $(`.fw-shell-${i + 1} .fw-flash`);
+        flash.classList.add('called');
+        clearTimeout(burstTimers[i]);
+        burstTimers[i] = setTimeout(() => flash.classList.remove('called'), 180);
+      }, { at: at + 620, direction: 1 });
+    });
 
     countTimeline(sigilTl, sigilClips.length);
 
@@ -2048,16 +2287,112 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
     // A timeline writes nothing until it is seeked — paint the 0% frame.
     sigilTl.progress(0);
 
-    // Everything starts at opacity 0, so at rest the stage is simply empty —
-    // fine for a scroll-driven section that you arrive at from the top, useless
-    // for a hover-driven one you might never touch. Play it through once on
-    // arrival so it settles assembled and invites the scrub. Hovering mid-flight
-    // just pauses it and takes over, which is the point of the section anyway.
+    // Play the sky through once on arrival so the first mortar launches without
+    // waiting for input. Hovering mid-flight pauses it and takes over; leaving
+    // hands the same playhead straight back to the clock.
     viewTrigger('#sec-studio', {
       enter: () => sigilTl.play(),
       once: true,
       threshold: 0.35,
     });
+
+    // ============================================================
+    // 08 — A timeline that never ends (four coprime loops)
+    // ============================================================
+    // Static variation is seeded and stored in CSS custom properties. Every
+    // element in a clip shares one FrameEngine, so per-element randomness does
+    // not belong in keyframe lazy values.
+    const campPines = $('#camp-pines');
+    const campEmbers = $('#camp-embers');
+    let campSeed = 2082026;
+    const campRnd = () => ((campSeed = (campSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+
+    for (let i = 0; i < 7; i += 1) {
+      const pine = document.createElement('i');
+      const height = Math.round(92 + campRnd() * 105);
+      pine.className = 'pine';
+      pine.style.setProperty('--pine-x', `${(5 + i * 15 + (campRnd() - 0.5) * 5).toFixed(2)}%`);
+      pine.style.setProperty('--pine-h', `${height}px`);
+      pine.style.setProperty('--pine-w', `${Math.round(height * 0.58)}px`);
+      pine.style.setProperty('--pine-color', `hsl(${Math.round(170 + campRnd() * 22)} 30% ${Math.round(8 + campRnd() * 6)}%)`);
+      pine.style.setProperty('--pine-opacity', (0.5 + campRnd() * 0.36).toFixed(2));
+      campPines.appendChild(pine);
+    }
+
+    for (let i = 0; i < 12; i += 1) {
+      const ember = document.createElement('i');
+      ember.className = 'ember';
+      ember.style.setProperty('--ember-x', `${(-52 + campRnd() * 104).toFixed(2)}px`);
+      ember.style.setProperty('--ember-size', `${(2 + campRnd() * 3.5).toFixed(2)}px`);
+      ember.style.setProperty('--ember-hue', Math.round(20 + campRnd() * 28));
+      ember.style.setProperty('--ember-tx', '0px');
+      ember.style.setProperty('--ember-ty', '0px');
+      ember.style.setProperty('--ember-scale', '0.3');
+      campEmbers.appendChild(ember);
+    }
+
+    const flameClip = {
+      name: 'flames', target: '.flame', at: 0, duration: 1580, easing: 'ease-in-out', stagger: 40,
+      keyframes: {
+        0: { opacity: '0.72', transform: 'translateX(-50%) translateY(0px) scaleX(0.9) scaleY(0.9)' },
+        18: { opacity: '0.96', transform: 'translateX(-50%) translateY(-8px) scaleX(1.08) scaleY(1.06)' },
+        37: { opacity: '0.8', transform: 'translateX(-50%) translateY(-2px) scaleX(0.84) scaleY(0.94)' },
+        55: { opacity: '1', transform: 'translateX(-50%) translateY(-12px) scaleX(1.12) scaleY(1.1)' },
+        74: { opacity: '0.84', transform: 'translateX(-50%) translateY(-5px) scaleX(0.94) scaleY(0.98)' },
+        100: { opacity: '0.72', transform: 'translateX(-50%) translateY(0px) scaleX(0.9) scaleY(0.9)' },
+      },
+    };
+
+    const emberClip = {
+      name: 'embers', target: '.ember', at: 0, duration: 1530, easing: 'ease-out', stagger: 70,
+      keyframes: {
+        0: { opacity: '0', '--ember-tx': '0px', '--ember-ty': '0px', '--ember-scale': '0.3' },
+        18: { opacity: '0.96', '--ember-tx': '4px', '--ember-ty': '-36px', '--ember-scale': '1' },
+        37: { opacity: '0.88', '--ember-tx': '10px', '--ember-ty': '-72px', '--ember-scale': '0.86' },
+        55: { opacity: '0.78', '--ember-tx': '18px', '--ember-ty': '-110px', '--ember-scale': '0.72' },
+        74: { opacity: '0.6', '--ember-tx': '27px', '--ember-ty': '-148px', '--ember-scale': '0.52' },
+        100: { opacity: '0', '--ember-tx': '38px', '--ember-ty': '-190px', '--ember-scale': '0.18' },
+      },
+    };
+
+    const pineClip = {
+      name: 'pines', target: '.pine', at: 0, duration: 5000, easing: 'ease-in-out', stagger: 50,
+      keyframes: {
+        0: { transform: 'translateX(-50%) rotate(-1.2deg)' },
+        31: { transform: 'translateX(-50%) rotate(0.4deg)' },
+        63: { transform: 'translateX(-50%) rotate(1.7deg)' },
+        82: { transform: 'translateX(-50%) rotate(-0.2deg)' },
+        100: { transform: 'translateX(-50%) rotate(-1.2deg)' },
+      },
+    };
+
+    const glowClip = {
+      name: 'glow', target: '#camp-glow', at: 0, duration: 1300, easing: 'ease-in-out', stagger: 0,
+      keyframes: {
+        0: { opacity: '0.62', transform: 'translate(-50%, -50%) scale(0.88)' },
+        48: { opacity: '1', transform: 'translate(-50%, -50%) scale(1.08)' },
+        100: { opacity: '0.62', transform: 'translate(-50%, -50%) scale(0.88)' },
+      },
+    };
+
+    const loopTimeline = (clip) => {
+      const tl = timeline({ loop: true });
+      tl.tween(clip.target, clip.keyframes, clip);
+      return countTimeline(tl, 1);
+    };
+
+    const flamesTl = loopTimeline(flameClip);
+    const embersTl = loopTimeline(emberClip);
+    const pinesTl = loopTimeline(pineClip);
+    const glowTl = loopTimeline(glowClip);
+    const fireTimelines = [flamesTl, embersTl, pinesTl, glowTl];
+
+    fireTimelines.forEach((tl) => tl.progress(0));
+
+    const playFire = () => fireTimelines.forEach((tl) => tl.play());
+    const pauseFire = () => fireTimelines.forEach((tl) => tl.pause());
+
+    viewTrigger('#sec-fire', { enter: playFire, leave: pauseFire });
 
     // Layout can settle after fonts load; every driver re-measures its range.
     const drivers = [heroDriver, cardsDriver, lockedDriver, smoothDriver, fuseDriver];
