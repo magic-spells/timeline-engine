@@ -170,12 +170,12 @@
     }
     .install-item { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
     .install-label {
-      font-size: 1rem; font-weight: 400; letter-spacing: 0.16em;
+      font-size: 0.875rem; font-weight: 400; letter-spacing: 0.16em;
       text-transform: uppercase; color: var(--text-dim);
     }
     .install-value {
       font-family: 'Courier New', monospace;
-      font-size: 1rem; color: var(--cream);
+      font-size: 0.9375rem; color: var(--cream);
       background: var(--bg-card); border: 1px solid var(--border);
       border-radius: 8px; padding: 0.5em 1.2em;
       user-select: all; cursor: copy;
@@ -186,7 +186,7 @@
        line, so the pill keeps its width and nothing re-centres mid-feedback. */
     .install-item.copied .install-value { color: var(--teal); border-color: var(--teal); }
     .install-item.copied .install-label { color: var(--teal); }
-    .install-size { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--teal); padding: 0.5em 0; }
+    .install-size { font-family: 'Courier New', monospace; font-size: 0.9375rem; color: var(--teal); padding: 0.5em 0; }
     .install-item-size { flex-basis: 100%; }
 
     /* ---- Dependency pills ----
@@ -200,7 +200,7 @@
     .dep-list { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
     .dep-badge {
       font-family: 'Courier New', monospace;
-      font-size: 1rem;
+      font-size: 0.9375rem;
       color: var(--teal);
       border: 1px solid var(--border-accent);
       border-radius: 100px;
@@ -233,11 +233,14 @@
     }
     .demo-section:hover { border-color: var(--border-accent); background: var(--bg-card-hover); }
 
-    .demo-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
-    .demo-index {
-      font-family: 'Courier New', monospace; font-size: 1rem;
-      color: var(--teal); letter-spacing: 0.1em;
+    /* Tags sit on their own row above the heading — they label the driver
+       ("who owns the playhead") for the section, so they read as a kicker
+       rather than as trailing metadata on the title's baseline. */
+    .demo-header {
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: 0.75rem; margin-bottom: 0.4rem;
     }
+    .demo-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; }
     .demo-section h2 {
       font-family: var(--font-display); font-weight: 400;
       font-size: 1.85rem; color: var(--cream); letter-spacing: -0.01em;
@@ -1154,9 +1157,10 @@
     <!-- ---- 01 Hero: offset clips on one axis ---- -->
     <section class="demo-section" id="sec-hero">
       <div class="demo-header">
-        <span class="demo-index">01</span>
+        <div class="demo-tags">
+          <span class="demo-tag">scroll · scrub</span>
+        </div>
         <h2>Clips at offset start times</h2>
-        <span class="demo-tag">scroll · scrub</span>
       </div>
       <p class="demo-desc">A star, three orbits, a comet and a staggered sky — seven clips on one time axis, each with its own <em>at</em> and <em>duration</em>, deliberately overlapping. A <code>scrollDriver</code> maps this stage's trip through the viewport onto the playhead, so scrolling is scrubbing: run it backwards and the planets orbit backwards. The ruler underneath is drawn from the very same clip list; the white line is the live playhead.</p>
 
@@ -1262,9 +1266,10 @@ heroTl.<span class="fn">on</span>(<span class="str">'update'</span>, (time) =&gt
     <!-- ---- 02 Stagger ---- -->
     <section class="demo-section" id="sec-stagger">
       <div class="demo-header">
-        <span class="demo-index">02</span>
+        <div class="demo-tags">
+          <span class="demo-tag">scroll · scrub</span>
+        </div>
         <h2>One clip, nine start times</h2>
-        <span class="demo-tag">scroll · scrub</span>
       </div>
       <p class="demo-desc">A single <code>tween()</code> over a nine-element selector with <em>stagger: 150</em>. Each element gets the same keyframes on its own window, offset by <em>index × 150ms</em>, and the timeline's duration stretches to cover the last one. Outside its window a clip holds its edge frames (<em>fill: 'both'</em>), which is why cards sit patiently at their 0% state until their turn arrives — and stay put afterwards.</p>
 
@@ -1304,10 +1309,11 @@ cardsTl.<span class="fn">tween</span>(<span class="str">'.stagger-card'</span>, 
     <!-- ---- 03 call() ---- -->
     <section class="demo-section" id="sec-call">
       <div class="demo-header">
-        <span class="demo-index">03</span>
+        <div class="demo-tags">
+          <span class="demo-tag">scroll · scrub</span>
+          <span class="demo-tag trigger">+ physics</span>
+        </div>
         <h2>A scene fired from a timeline position</h2>
-        <span class="demo-tag">scroll · scrub</span>
-        <span class="demo-tag trigger">+ physics</span>
       </div>
       <p class="demo-desc">The spark is scrubbed; the burst is not. <code>tl.call()</code> registers a callback at a labelled time — here <em>'ignite'</em>, the end of the spark's clip — and it fires when the playhead crosses it in either direction, scrubbing included. Scroll down past the mark to see direction <em>+1</em> launch a spring-driven burst; scroll back up and the same crossing reports <em>-1</em>, which the callback ignores. This is the bridge between the two halves of the ecosystem.</p>
 
@@ -1365,9 +1371,10 @@ fuseTl
     <!-- ---- 04 Fireworks studio ---- -->
     <section class="demo-section" id="sec-studio">
       <div class="demo-header">
-        <span class="demo-index">04</span>
+        <div class="demo-tags">
+          <span class="demo-tag clock">hover · scrub · play</span>
+        </div>
         <h2>Your cursor is the playhead</h2>
-        <span class="demo-tag clock">hover · scrub · play</span>
       </div>
       <p class="demo-desc">No scroll and no physics here — cursor X <em>is</em> the playhead, so sweep backwards and every firework implodes while its mortar drops back to earth. The strip below is drawn from the same clip list that built the timeline, lit where a clip is actually interpolating and dimmed where it's only holding a fill frame. Pull the cursor away and <code>play()</code> picks it up from exactly where you left it.</p>
 
@@ -1473,9 +1480,10 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
     <!-- ---- 05 Looping timelines ---- -->
     <section class="demo-section" id="sec-fire">
       <div class="demo-header">
-        <span class="demo-index">05</span>
+        <div class="demo-tags">
+          <span class="demo-tag clock">clock · loop</span>
+        </div>
         <h2>A timeline that never ends</h2>
-        <span class="demo-tag clock">clock · loop</span>
       </div>
       <p class="demo-desc">A single loop eventually gives itself away. This fire is four <code>loop: true</code> timelines on the shared ticker — flames at 1700ms, embers at 2300ms, pines at 5300ms and glow at 1300ms. Their coprime rhythms only realign after roughly 7.5 hours, so the composite never visibly repeats. The lanes underneath draw all four to one shared scale — same pixels per second, different wrap points — so you can watch them slide out of phase. Leaving the viewport pauses all four; returning resumes them from their own playheads.</p>
 
@@ -1567,9 +1575,10 @@ fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">pro
     <!-- ---- 06 Smoothing ---- -->
     <section class="demo-section" id="sec-smooth">
       <div class="demo-header">
-        <span class="demo-index">06</span>
+        <div class="demo-tags">
+          <span class="demo-tag">scroll · scrub</span>
+        </div>
         <h2>Locked vs. smoothed</h2>
-        <span class="demo-tag">scroll · scrub</span>
       </div>
       <p class="demo-desc">Two identical timelines, one scroll range, two drivers. The left needle is welded to the scroll position; the right one lerps toward it with <em>smoothing: 150</em> — a time constant in milliseconds, so it closes ~63% of the gap every 150ms regardless of frame rate. Flick the page and watch the amber needle trail the teal one, then settle. Smoothing rides the shared ticker and unsubscribes the moment it catches up.</p>
 
@@ -1636,9 +1645,10 @@ smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; 
     <!-- ---- 07 viewTrigger + physics ---- -->
     <section class="demo-section" id="sec-pop">
       <div class="demo-header">
-        <span class="demo-index">07</span>
+        <div class="demo-tags">
+          <span class="demo-tag trigger">viewport · physics</span>
+        </div>
         <h2>Triggered, not scrubbed</h2>
-        <span class="demo-tag trigger">viewport · physics</span>
       </div>
       <p class="demo-desc">Nothing here is on a playhead. <code>viewTrigger</code> is an IntersectionObserver wrapper: when the stage enters the viewport it plays an <em>animation-engine</em> scene — springs, one per bubble, each with its own friction, settling on their own schedule. That's precisely what a scrubbed clip can't express: a spring has no position-at-time to sample. <em>once: true</em> disconnects the observer after the first entry, so the button below is the only encore.</p>
 
@@ -1689,9 +1699,10 @@ $(<span class="str">'#pop-replay'</span>).<span class="fn">addEventListener</spa
     <!-- ---- 08 Timed playback ---- -->
     <section class="demo-section" id="sec-play">
       <div class="demo-header">
-        <span class="demo-index">08</span>
+        <div class="demo-tags">
+          <span class="demo-tag clock">play · scrub</span>
+        </div>
         <h2>The same timeline, on a clock</h2>
-        <span class="demo-tag clock">play · scrub</span>
       </div>
       <p class="demo-desc">Nothing about a timeline assumes scroll. <code>play()</code> rides animation-engine's shared ticker and returns a promise that resolves on completion or pause; <code>timeScale()</code> composes with the ticker's own. Drag the slider and the very same clips are driven by <code>progress(p)</code> instead — the playhead doesn't care who is moving it.</p>
 
