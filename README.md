@@ -12,6 +12,8 @@ deterministic complement to
 [`@magic-spells/animation-engine`](https://github.com/magic-spells/animation-engine),
 whose async scenes deliberately can't seek.
 
+🔍 **[Live Demo](https://magic-spells.github.io/timeline-engine/demo/)** - See it in action!
+
 ## Install
 
 ```sh
@@ -238,3 +240,9 @@ npm run build  # ESM (deps externalized) + self-contained UMD
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  Made by <a href="https://github.com/coryschulz">Cory Schulz</a>
+</p>

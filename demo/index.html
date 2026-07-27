@@ -26,13 +26,19 @@
       --cool: #86b5e8;
       --amber: #d9a441;
       --rose: #e08a6f;
-      --cream: #e6eae6;
-      --cream-dim: #97a19c;
-      --text: #c6cdc8;
-      --text-dim: #7c857f;
+      /* Text ramp. Every step clears 7:1 on --bg-deep — the old ramp bottomed
+         out at 5.2:1 for --text-dim, which carried most of the small labels and
+         all of the section prose, and it read as unfinished grey on a dark page. */
+      --cream: #f2f5f2;
+      --cream-dim: #c2ccc6;
+      --text: #dfe5e1;
+      --text-dim: #a9b3ad;
       --font-display: 'Cormorant Garamond', Georgia, serif;
       --font-body: 'Outfit', system-ui, sans-serif;
-      --lane-name: 104px;
+      /* Sized to the longest label each gutter actually holds at 1rem mono
+         ("sparks radial", "5300ms · ×12") — they grew with the type floor. */
+      --lane-name: 150px;
+      --loop-meta: 128px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -92,55 +98,21 @@
       position: relative;
       font-family: var(--font-body);
       font-weight: 400;
-      font-size: 0.7rem;
-      letter-spacing: 0.25em;
+      font-size: 1rem;
+      /* Tracking pulled in from 0.25em: at 1rem the old value ran the pill past
+         a phone's width, and nothing here may drop below the 16px floor. */
+      letter-spacing: 0.13em;
       text-transform: uppercase;
       color: var(--teal);
       border: 1px solid var(--border-accent);
-      padding: 0.4em 1.4em;
+      padding: 0.45em 1.4em;
+      max-width: 100%;
       border-radius: 100px;
-      margin-bottom: 1rem;
+      margin-bottom: 2.5rem;
       text-decoration: none;
       transition: border-color 0.3s ease, color 0.3s ease;
     }
     .hero-badge:hover { border-color: var(--teal-dim); color: var(--cream); }
-
-    /* ---- Dependency pills ----
-       Same pill language as .hero-badge but deliberately quieter — mono, dimmer,
-       plain --border — so "this is built on our own packages" reads without
-       competing with the title directly beneath it. The scope is greyed inside
-       each pill so the eye lands on the package name while the full specifier
-       stays copyable. Wraps to its own lines on narrow screens. */
-    .hero-deps {
-      position: relative;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      max-width: 760px;
-      margin-bottom: 2.5rem;
-    }
-    .hero-deps-label {
-      font-size: 0.62rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-    .dep-badge {
-      font-family: 'Courier New', monospace;
-      font-size: 0.68rem;
-      color: var(--cream-dim);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 0.45em 1.05em;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: border-color 0.3s ease, color 0.3s ease;
-    }
-    .dep-badge:hover { border-color: var(--teal-dim); color: var(--teal); }
-    .dep-badge .dep-scope { color: var(--text-dim); }
-    .dep-badge:hover .dep-scope { color: var(--teal-dim); }
 
     .hero h1 {
       position: relative;
@@ -156,10 +128,10 @@
 
     .hero p {
       position: relative;
-      max-width: 580px;
-      font-size: 1.02rem;
-      line-height: 1.7;
-      color: var(--text-dim);
+      max-width: 600px;
+      font-size: 1.12rem;
+      line-height: 1.72;
+      color: var(--text);
       opacity: 0;
       animation: fadeUp 1s ease forwards 0.25s;
     }
@@ -170,8 +142,8 @@
       position: relative;
       margin-top: 2.5rem;
       font-family: 'Courier New', monospace;
-      font-size: 0.68rem;
-      letter-spacing: 0.22em;
+      font-size: 1rem;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--text-dim);
       opacity: 0;
@@ -198,20 +170,48 @@
     }
     .install-item { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
     .install-label {
-      font-size: 0.65rem; font-weight: 400; letter-spacing: 0.18em;
+      font-size: 1rem; font-weight: 400; letter-spacing: 0.16em;
       text-transform: uppercase; color: var(--text-dim);
     }
     .install-value {
       font-family: 'Courier New', monospace;
-      font-size: 0.88rem; color: var(--cream);
+      font-size: 1rem; color: var(--cream);
       background: var(--bg-card); border: 1px solid var(--border);
       border-radius: 8px; padding: 0.5em 1.2em;
       user-select: all; cursor: copy;
       transition: border-color 0.3s ease;
     }
     .install-value:hover { border-color: var(--teal-dim); }
-    .install-size { font-family: 'Courier New', monospace; font-size: 0.88rem; color: var(--teal); padding: 0.5em 0; }
+    /* Copy confirmation. It rides the label rather than appending to the npm
+       line, so the pill keeps its width and nothing re-centres mid-feedback. */
+    .install-item.copied .install-value { color: var(--teal); border-color: var(--teal); }
+    .install-item.copied .install-label { color: var(--teal); }
+    .install-size { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--teal); padding: 0.5em 0; }
     .install-item-size { flex-basis: 100%; }
+
+    /* ---- Dependency pills ----
+       Last row of the install banner, under the size: label on top, then the
+       packages stacked so the three names read as a list instead of a wrapping
+       row. Lit the same way as .hero-badge (teal on --border-accent) — down here
+       they have nothing to compete with, so "this is built on our own packages"
+       gets to be a real call to action. The scope is greyed inside each pill so
+       the eye lands on the package name while the full specifier stays copyable. */
+    .install-item-deps { flex-basis: 100%; gap: 0.7rem; }
+    .dep-list { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .dep-badge {
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      color: var(--teal);
+      border: 1px solid var(--border-accent);
+      border-radius: 100px;
+      padding: 0.5em 1.4em;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: border-color 0.3s ease, color 0.3s ease;
+    }
+    .dep-badge:hover { border-color: var(--teal-dim); color: var(--cream); }
+    .dep-badge .dep-scope { color: var(--text-dim); }
+    .dep-badge:hover .dep-scope { color: var(--cream-dim); }
 
     /* ---- Sections ---- */
     .demos {
@@ -235,28 +235,30 @@
 
     .demo-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
     .demo-index {
-      font-family: 'Courier New', monospace; font-size: 0.72rem;
-      color: var(--teal-dim); letter-spacing: 0.1em;
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      color: var(--teal); letter-spacing: 0.1em;
     }
     .demo-section h2 {
       font-family: var(--font-display); font-weight: 400;
       font-size: 1.85rem; color: var(--cream); letter-spacing: -0.01em;
     }
     .demo-tag {
-      font-family: 'Courier New', monospace; font-size: 0.62rem;
-      letter-spacing: 0.16em; text-transform: uppercase;
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--teal); border: 1px solid var(--border-accent);
       border-radius: 100px; padding: 0.25em 0.9em;
     }
     .demo-tag.trigger { color: var(--amber); }
     .demo-tag.clock { color: var(--cool); }
     .demo-desc {
-      font-size: 0.98rem; color: var(--text-dim); line-height: 1.6;
-      margin-bottom: 1.75rem; max-width: 640px;
+      font-size: 1.08rem; color: var(--text); line-height: 1.68;
+      margin-bottom: 1.75rem; max-width: 680px;
     }
-    .demo-desc em { color: var(--cream-dim); font-style: italic; }
+    .demo-desc em { color: var(--cream); font-style: italic; }
     .demo-desc code {
-      font-family: 'Courier New', monospace; font-size: 0.88em; color: var(--cream-dim);
+      /* em-relative so it tracks its paragraph, and 1em so it can't dip under
+         the 16px floor no matter which size that paragraph settles on. */
+      font-family: 'Courier New', monospace; font-size: 1em; color: var(--cream-dim);
     }
 
     /* ---- Stage ---- */
@@ -281,7 +283,7 @@
       margin-top: 1.1rem;
     }
     .meter-label {
-      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+      font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--text-dim); white-space: nowrap;
     }
     .meter-track {
@@ -294,8 +296,8 @@
       transform: scaleX(0); transform-origin: left center;
     }
     .meter-num {
-      font-family: 'Courier New', monospace; font-size: 0.76rem;
-      color: var(--teal); min-width: 46px; text-align: right;
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      color: var(--teal); min-width: 60px; text-align: right;
     }
 
     /* ---- Controls / buttons ---- */
@@ -303,7 +305,7 @@
 
     .btn {
       font-family: var(--font-body); font-weight: 400;
-      font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+      font-size: 1rem; letter-spacing: 0.12em; text-transform: uppercase;
       color: var(--cream); background: transparent;
       border: 1px solid var(--border-accent);
       padding: 0.6em 1.6em; border-radius: 100px;
@@ -311,7 +313,7 @@
     }
     .btn:hover { border-color: var(--teal-dim); color: var(--teal); box-shadow: 0 0 20px rgba(94,202,187,0.1); }
     .btn.active { border-color: var(--teal); color: var(--teal); background: rgba(94,202,187,0.06); }
-    .btn.small { font-size: 0.64rem; padding: 0.45em 1.1em; }
+    .btn.small { font-size: 1rem; padding: 0.45em 1.1em; letter-spacing: 0.1em; }
     .btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
 
     input[type="range"] {
@@ -341,7 +343,7 @@
     }
     .code-aside summary {
       cursor: pointer; list-style: none;
-      font-size: 0.65rem; font-weight: 400; letter-spacing: 0.18em;
+      font-size: 1rem; font-weight: 400; letter-spacing: 0.14em;
       text-transform: uppercase; color: var(--text-dim);
       padding: 0.9rem 1.25rem;
       transition: color 0.25s ease;
@@ -353,8 +355,8 @@
     .code-aside summary:hover { color: var(--cream-dim); }
     .code-aside pre { margin: 0; padding: 0 1.25rem 1.25rem; overflow-x: auto; }
     .code-aside code {
-      font-family: 'Courier New', monospace; font-size: 0.76rem;
-      line-height: 1.7; color: var(--cream-dim); white-space: pre;
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      line-height: 1.7; color: var(--cream); white-space: pre;
     }
     .code-aside code .kw { color: var(--teal); }
     .code-aside code .fn { color: #7fe0cf; }
@@ -469,9 +471,9 @@
       margin: 1.4rem 0 0.6rem;
     }
     .ruler-title {
-      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim);
+      font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim);
     }
-    .ruler-time { font-family: 'Courier New', monospace; font-size: 0.78rem; color: var(--teal); }
+    .ruler-time { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--teal); }
     .ruler {
       position: relative;
       border: 1px solid var(--border);
@@ -479,9 +481,9 @@
       padding: 0.75rem 0.9rem;
       background: rgba(0,0,0,0.3);
     }
-    .lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 22px; }
+    .lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 28px; }
     .lane-name {
-      font-family: 'Courier New', monospace; font-size: 0.64rem;
+      font-family: 'Courier New', monospace; font-size: 1rem;
       color: var(--cream-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .lane-track { position: relative; height: 8px; background: rgba(255,255,255,0.03); border-radius: 4px; }
@@ -534,10 +536,10 @@
       font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; color: var(--cream);
     }
     .stagger-card span {
-      font-family: 'Courier New', monospace; font-size: 0.58rem; color: var(--teal); letter-spacing: 0.04em;
+      font-family: 'Courier New', monospace; font-size: 1rem; color: var(--teal); letter-spacing: 0;
     }
 
-    /* ---- 03 Smoothing ---- */
+    /* ---- 06 Smoothing ---- */
     .smooth-stage {
       display: grid; grid-template-columns: 1fr 1fr;
       background:
@@ -580,11 +582,11 @@
     }
     .smooth-cap { text-align: center; }
     .smooth-cap .t { font-family: var(--font-display); font-size: 1.45rem; color: var(--cream); display: block; }
-    .smooth-cap .s { font-family: 'Courier New', monospace; font-size: 0.68rem; color: var(--text-dim); }
+    .smooth-cap .s { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--text-dim); }
     .smooth-val { font-family: 'Courier New', monospace; font-size: 1.35rem; color: var(--teal); }
     .smooth-val.alt { color: var(--amber); }
 
-    /* ---- 04 call() ---- */
+    /* ---- 03 call() ---- */
     .fuse-stage {
       background:
         radial-gradient(ellipse at 50% 50%, rgba(217,164,65,0.06), transparent 58%),
@@ -604,9 +606,9 @@
       background: linear-gradient(180deg, transparent, var(--amber), transparent);
     }
     .fuse-mark span {
-      position: absolute; top: -26px; left: 10px;
-      font-family: 'Courier New', monospace; font-size: 0.62rem;
-      letter-spacing: 0.1em; color: var(--amber); white-space: nowrap;
+      position: absolute; top: -30px; left: 10px;
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      letter-spacing: 0.06em; color: var(--amber); white-space: nowrap;
     }
     .fuse-spark {
       position: absolute;
@@ -644,7 +646,7 @@
       list-style: none;
       margin-top: 1.1rem;
       font-family: 'Courier New', monospace;
-      font-size: 0.72rem;
+      font-size: 1rem;
       color: var(--text-dim);
       min-height: 5.4em;
     }
@@ -671,21 +673,21 @@
       font-family: var(--font-display); font-weight: 400;
       font-size: 1.25rem; color: var(--cream); margin-bottom: 0.4rem;
     }
-    .split-card p { font-size: 0.9rem; line-height: 1.6; color: var(--text-dim); }
-    .split-card code { font-family: 'Courier New', monospace; font-size: 0.86em; color: var(--teal); }
+    .split-card p { font-size: 1.05rem; line-height: 1.65; color: var(--text); }
+    .split-card code { font-family: 'Courier New', monospace; font-size: 1em; color: var(--teal); }
     .split-card.trigger code { color: var(--amber); }
 
     /* ---- Footer ---- */
     .foot {
       text-align: center; padding: 3rem 1.5rem 5rem;
-      color: var(--text-dim); font-size: 0.85rem;
+      color: var(--text-dim); font-size: 1rem;
     }
-    .foot a { color: var(--teal-dim); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.25s ease; }
-    .foot a:hover { border-color: var(--teal-dim); }
+    .foot a { color: var(--teal); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.25s ease; }
+    .foot a:hover { border-color: var(--teal); }
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ---- 05 Fireworks: hover-scrubbed studio preview ---- */
+    /* ---- 04 Fireworks: hover-scrubbed studio preview ---- */
     /* The whole panel is the scrub surface — stage and strip both. Cursor X
        across it maps to the playhead, so there's no separate "handle" to find. */
     .studio {
@@ -766,7 +768,7 @@
       will-change: transform;
     }
 
-    /* ---- 06 Campfire: four coprime looping timelines ---- */
+    /* ---- 05 Campfire: four coprime looping timelines ---- */
     .camp-stage {
       height: 340px;
       background: #03060b;
@@ -869,6 +871,48 @@
       will-change: transform, opacity;
     }
 
+    /* ---- the loop ruler ---- */
+    /* Track width is proportional to that timeline's own duration, so every
+       playhead crosses at the same pixels-per-second and only the wrap points
+       differ — the drift you see is the real drift, not a drawing trick. */
+    .loop-lane {
+      display: grid;
+      grid-template-columns: var(--lane-name) 1fr var(--loop-meta);
+      align-items: center; gap: 0 0.6rem;
+      height: 30px;
+    }
+    .loop-lane .lane-name { font-size: 1rem; }
+    .loop-track {
+      position: relative;
+      width: var(--loop-w);
+      height: 10px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.035);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .loop-fill {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      width: 0;
+      border-radius: 5px;
+      background: linear-gradient(90deg, rgba(217,164,65,0.1), rgba(217,164,65,0.5));
+    }
+    .loop-head {
+      position: absolute; top: -3px; bottom: -3px; left: 0;
+      width: 1px;
+      background: var(--amber);
+      box-shadow: 0 0 9px rgba(217,164,65,0.75);
+    }
+    .loop-head::before {
+      content: ''; position: absolute; top: -3.5px; left: -3px;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--amber);
+    }
+    .loop-meta {
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      color: var(--text-dim); text-align: right; white-space: nowrap;
+    }
+    .loop-meta b { color: var(--cream-dim); font-weight: 400; }
+
     /* ---- the strip ---- */
     .studio-strip {
       position: relative;
@@ -880,7 +924,7 @@
       display: flex; align-items: center; gap: 0.7rem;
       margin: 0 0 0.6rem calc(var(--lane-name) + 0.6rem);
       font-family: 'Courier New', monospace;
-      font-size: 0.64rem;
+      font-size: 1rem;
       color: var(--text-dim);
     }
     .strip-time { color: var(--cream); }
@@ -889,19 +933,19 @@
     /* Who owns the playhead right now — the whole point of the section. */
     .owner {
       display: inline-flex; align-items: center; gap: 0.34rem;
-      padding: 0.16rem 0.5rem;
+      padding: 0.16rem 0.6rem;
       border: 1px solid var(--border-accent);
       border-radius: 999px;
-      font-size: 0.6rem;
-      letter-spacing: 0.06em;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--cool);
       transition: color 0.18s, border-color 0.18s;
     }
     .owner.is-cursor { color: var(--teal); border-color: var(--teal-dim); }
 
-    .studio-lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 21px; }
-    .studio-lane .lane-name { font-size: 0.62rem; transition: color 0.15s; }
+    .studio-lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 27px; }
+    .studio-lane .lane-name { font-size: 1rem; transition: color 0.15s; }
     .studio-lane.live .lane-name { color: var(--teal); }
     .studio-lane .lane-track { height: 9px; }
     .studio-bar {
@@ -960,7 +1004,7 @@
     /* Shared with 08's transport read-out, not just the bubbles. */
     .status-line {
       display: flex; align-items: center; gap: 0.8rem;
-      font-family: 'Courier New', monospace; font-size: 0.78rem;
+      font-family: 'Courier New', monospace; font-size: 1rem;
       color: var(--cream-dim); margin-top: 1.1rem; min-height: 1.4em;
     }
     .status-dot {
@@ -1000,26 +1044,44 @@
       transform: scaleX(0); transform-origin: left center;
     }
     .transport-read {
-      font-family: 'Courier New', monospace; font-size: 0.75rem;
-      color: var(--cool); min-width: 118px; text-align: right;
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      color: var(--cool); min-width: 155px; text-align: right;
+      /* Grows so that when the row wraps it right-aligns to the panel edge
+         instead of stranding a 155px box at the start of a fresh line. */
+      flex: 1 1 auto;
     }
     .scrub-row { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
     .scrub-row .slider-label {
-      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+      font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--text-dim); white-space: nowrap;
     }
 
     /* ---- Responsive ---- */
     @media (max-width: 720px) {
-      :root { --lane-name: 78px; }
-      .demo-section { padding: 1.5rem; }
+      /* The gutters can't shrink below their 1rem labels any more, so narrow
+         screens buy track width by trimming chrome instead of type. */
+      :root { --lane-name: 132px; }
+      .demo-section { padding: 1.5rem 1.1rem; }
+      .hero { padding: 4.5rem 1.1rem 3rem; }
+      .hero-badge { padding: 0.45em 0.9em; letter-spacing: 0.06em; }
+      .dep-badge { padding: 0.5em 1em; }
       .scrub-stage { height: 54vh; min-height: 280px; }
       .scrub-track.pinned { height: 170vh; }
       .split-note { grid-template-columns: 1fr; }
+      /* A name + track + meta row can't hold all three at 1rem on a phone.
+         Track drops to its own full-width line; the labels share the one above. */
+      .loop-lane {
+        grid-template-columns: 1fr auto;
+        grid-template-areas: 'name meta' 'track track';
+        height: auto; row-gap: 0.3rem; padding: 0.4rem 0;
+      }
+      .loop-lane .lane-name { grid-area: name; }
+      .loop-lane .loop-track { grid-area: track; }
+      .loop-lane .loop-meta { grid-area: meta; }
       /* The two gauges only make their point side by side — shrink, don't stack. */
       .smooth-cell { gap: 0.6rem; padding: 0.75rem; }
       .smooth-cap .t { font-size: 1.05rem; }
-      .smooth-cap .s { font-size: 0.58rem; }
+      .smooth-cap .s { font-size: 1rem; }
       .smooth-val { font-size: 1rem; }
       /* The outer orbit is 344px — wider than a narrow stage. Shrink the system. */
       .orbit-1 { width: 112px; height: 112px; margin: -56px 0 0 -56px; }
@@ -1045,12 +1107,6 @@
   <!-- ======== HERO ======== -->
   <header class="hero">
     <a class="hero-badge" href="https://github.com/magic-spells/timeline-engine" target="_blank" rel="noopener">@magic-spells/timeline-engine</a>
-    <div class="hero-deps">
-      <span class="hero-deps-label">Uses</span>
-      <a class="dep-badge" href="https://github.com/magic-spells/animation-engine" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>animation-engine</a>
-      <a class="dep-badge" href="https://github.com/magic-spells/event-emitter" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>event-emitter</a>
-      <a class="dep-badge" href="https://github.com/magic-spells/frame-engine" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>frame-engine</a>
-    </div>
     <h1>
       <span class="line1">Timeline</span><br />
       <span class="line2">Engine</span>
@@ -1069,6 +1125,14 @@
     <div class="install-item install-item-size">
       <span class="install-label">Size (gzip)</span>
       <span class="install-size">10.3 kB</span>
+    </div>
+    <div class="install-item install-item-deps">
+      <span class="install-label">Uses</span>
+      <div class="dep-list">
+        <a class="dep-badge" href="https://github.com/magic-spells/animation-engine" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>animation-engine</a>
+        <a class="dep-badge" href="https://github.com/magic-spells/event-emitter" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>event-emitter</a>
+        <a class="dep-badge" href="https://github.com/magic-spells/frame-engine" target="_blank" rel="noopener"><span class="dep-scope">@magic-spells/</span>frame-engine</a>
+      </div>
     </div>
   </div>
 
@@ -1237,79 +1301,10 @@ cardsTl.<span class="fn">tween</span>(<span class="str">'.stagger-card'</span>, 
       </details>
     </section>
 
-    <!-- ---- 03 Smoothing ---- -->
-    <section class="demo-section" id="sec-smooth">
-      <div class="demo-header">
-        <span class="demo-index">03</span>
-        <h2>Locked vs. smoothed</h2>
-        <span class="demo-tag">scroll · scrub</span>
-      </div>
-      <p class="demo-desc">Two identical timelines, one scroll range, two drivers. The left needle is welded to the scroll position; the right one lerps toward it with <em>smoothing: 150</em> — a time constant in milliseconds, so it closes ~63% of the gap every 150ms regardless of frame rate. Flick the page and watch the amber needle trail the teal one, then settle. Smoothing rides the shared ticker and unsubscribes the moment it catches up.</p>
-
-      <div class="scrub-track pinned" id="smooth-track">
-        <div class="scrub-sticky">
-          <div class="stage scrub-stage smooth-stage">
-            <div class="smooth-cell">
-              <div class="gauge">
-                <div class="gauge-arc"></div>
-                <i class="needle" id="needle-locked"></i>
-                <span class="gauge-hub"></span>
-              </div>
-              <div class="smooth-cap">
-                <span class="t">Locked</span>
-                <span class="s">smoothing: 0</span>
-              </div>
-              <span class="smooth-val" id="val-locked">0.000</span>
-            </div>
-            <div class="smooth-cell">
-              <div class="gauge">
-                <div class="gauge-arc"></div>
-                <i class="needle alt" id="needle-smooth"></i>
-                <span class="gauge-hub"></span>
-              </div>
-              <div class="smooth-cap">
-                <span class="t">Smoothed</span>
-                <span class="s">smoothing: 150</span>
-              </div>
-              <span class="smooth-val alt" id="val-smooth">0.000</span>
-            </div>
-          </div>
-          <div class="meter">
-            <span class="meter-label">scroll position</span>
-            <span class="meter-track"><i class="meter-fill"></i></span>
-            <span class="meter-num">0.000</span>
-          </div>
-        </div>
-      </div>
-
-      <details class="code-aside">
-        <summary>view the timelines()</summary>
-        <pre><code><span class="cm">// Same clip, twice — the only difference is the driver.</span>
-<span class="kw">const</span> dial = (target) =&gt;
-  <span class="fn">timeline</span>().<span class="fn">tween</span>(target, {
-    <span class="num">0</span>:   { <span class="prop">transform</span>: <span class="str">'rotate(-62deg)'</span> },
-    <span class="num">100</span>: { <span class="prop">transform</span>: <span class="str">'rotate(62deg)'</span> },
-  }, { <span class="prop">duration</span>: <span class="num">1000</span>, <span class="prop">easing</span>: <span class="str">'linear'</span> });
-
-<span class="kw">const</span> lockedTl = <span class="fn">dial</span>(<span class="str">'#needle-locked'</span>);
-<span class="kw">const</span> smoothTl = <span class="fn">dial</span>(<span class="str">'#needle-smooth'</span>);
-
-<span class="kw">const</span> range = { <span class="prop">trigger</span>: <span class="str">'#smooth-track'</span>, <span class="prop">start</span>: <span class="str">'top 15%'</span>, <span class="prop">end</span>: <span class="str">'bottom 77%'</span> };
-
-<span class="fn">scrollDriver</span>(lockedTl, { ...range, <span class="prop">smoothing</span>: <span class="num">0</span> });     <span class="cm">// welded to scroll</span>
-<span class="fn">scrollDriver</span>(smoothTl, { ...range, <span class="prop">smoothing</span>: <span class="num">150</span>,       <span class="cm">// ms time constant</span>
-  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-smooth'</span>) });                <span class="cm">// onProgress reports the raw scroll</span>
-
-<span class="cm">// Read the two playheads back out for the numbers under each gauge.</span>
-lockedTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; { lockedOut.textContent = lockedTl.<span class="fn">progress</span>().<span class="fn">toFixed</span>(<span class="num">3</span>); });
-smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; { smoothOut.textContent = smoothTl.<span class="fn">progress</span>().<span class="fn">toFixed</span>(<span class="num">3</span>); });</code></pre>
-      </details>
-    </section>
-
-    <!-- ---- 04 call() ---- -->
+    <!-- ---- 03 call() ---- -->
     <section class="demo-section" id="sec-call">
       <div class="demo-header">
-        <span class="demo-index">04</span>
+        <span class="demo-index">03</span>
         <h2>A scene fired from a timeline position</h2>
         <span class="demo-tag">scroll · scrub</span>
         <span class="demo-tag trigger">+ physics</span>
@@ -1367,10 +1362,10 @@ fuseTl
       </details>
     </section>
 
-    <!-- ---- 05 Fireworks studio ---- -->
+    <!-- ---- 04 Fireworks studio ---- -->
     <section class="demo-section" id="sec-studio">
       <div class="demo-header">
-        <span class="demo-index">05</span>
+        <span class="demo-index">04</span>
         <h2>Your cursor is the playhead</h2>
         <span class="demo-tag clock">hover · scrub · play</span>
       </div>
@@ -1475,14 +1470,14 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
       </details>
     </section>
 
-    <!-- ---- 06 Looping timelines ---- -->
+    <!-- ---- 05 Looping timelines ---- -->
     <section class="demo-section" id="sec-fire">
       <div class="demo-header">
-        <span class="demo-index">06</span>
+        <span class="demo-index">05</span>
         <h2>A timeline that never ends</h2>
         <span class="demo-tag clock">clock · loop</span>
       </div>
-      <p class="demo-desc">A single loop eventually gives itself away. This fire is four <code>loop: true</code> timelines on the shared ticker — flames at 1700ms, embers at 2300ms, pines at 5300ms and glow at 1300ms. Their coprime rhythms only realign after roughly 7.5 hours, so the composite never visibly repeats. Leaving the viewport pauses all four; returning resumes them from their own playheads.</p>
+      <p class="demo-desc">A single loop eventually gives itself away. This fire is four <code>loop: true</code> timelines on the shared ticker — flames at 1700ms, embers at 2300ms, pines at 5300ms and glow at 1300ms. Their coprime rhythms only realign after roughly 7.5 hours, so the composite never visibly repeats. The lanes underneath draw all four to one shared scale — same pixels per second, different wrap points — so you can watch them slide out of phase. Leaving the viewport pauses all four; returning resumes them from their own playheads.</p>
 
       <div class="stage camp-stage" id="camp-stage">
         <div class="camp-sky"></div>
@@ -1496,6 +1491,14 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
           <i class="flame flame-inner"></i>
           <i class="flame flame-core"></i>
         </div>
+      </div>
+
+      <div class="ruler-head-row">
+        <span class="ruler-title">four playheads · one ticker</span>
+        <span class="ruler-time" id="camp-realign">realign in 7h 29m 00s</span>
+      </div>
+      <div class="ruler" id="camp-ruler">
+        <div id="camp-lanes"></div>
       </div>
 
       <details class="code-aside">
@@ -1524,11 +1527,33 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
   <span class="kw">return</span> <span class="fn">countTimeline</span>(tl, <span class="num">1</span>);
 };
 
-<span class="kw">const</span> flamesTl = <span class="fn">loopTimeline</span>(flameClip);
-<span class="kw">const</span> embersTl = <span class="fn">loopTimeline</span>(emberClip);
-<span class="kw">const</span> pinesTl = <span class="fn">loopTimeline</span>(pineClip);
-<span class="kw">const</span> glowTl = <span class="fn">loopTimeline</span>(glowClip);
-<span class="kw">const</span> fireTimelines = [flamesTl, embersTl, pinesTl, glowTl];
+<span class="kw">const</span> fireClips = [flameClip, emberClip, pineClip, glowClip];
+<span class="kw">const</span> fireTimelines = fireClips.<span class="fn">map</span>(loopTimeline);
+
+<span class="cm">// One lane per timeline, all on ONE scale: track width is proportional to that</span>
+<span class="cm">// timeline's own duration, so every playhead moves at the same px/second and</span>
+<span class="cm">// only the wrap points differ. The drift on screen is the real drift.</span>
+<span class="kw">const</span> fireLongest = Math.<span class="fn">max</span>(...fireTimelines.<span class="fn">map</span>((tl) =&gt; tl.duration));
+
+fireTimelines.<span class="fn">forEach</span>((tl, i) =&gt; {
+  <span class="kw">const</span> { track, fill, head, lapOut } = <span class="fn">drawLane</span>(fireClips[i].name, tl.duration);
+  track.style.<span class="fn">setProperty</span>(<span class="str">'--loop-w'</span>, <span class="str">`${(tl.duration / fireLongest) * 100}%`</span>);
+
+  <span class="cm">// A wrap is the only moment the playhead moves backwards.</span>
+  <span class="kw">let</span> laps = <span class="num">0</span>, previous = <span class="num">0</span>;
+  tl.<span class="fn">on</span>(<span class="str">'update'</span>, (time) =&gt; {
+    <span class="kw">if</span> (time &lt; previous) lapOut.textContent = <span class="str">`×${(laps += 1)}`</span>;
+    previous = time;
+    <span class="kw">const</span> percent = <span class="str">`${(time / tl.duration) * 100}%`</span>;
+    head.style.left = percent;
+    fill.style.width = percent;
+  });
+});
+
+<span class="cm">// The four periods only realign at their least common multiple — 26,939,900ms,</span>
+<span class="cm">// which is what the countdown above the lanes is counting down.</span>
+<span class="kw">const</span> <span class="fn">gcd</span> = (a, b) =&gt; (b ? <span class="fn">gcd</span>(b, a % b) : a);
+<span class="kw">const</span> fireCycle = fireTimelines.<span class="fn">reduce</span>((a, tl) =&gt; (a * tl.duration) / <span class="fn">gcd</span>(a, tl.duration), <span class="num">1</span>);
 
 fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">progress</span>(<span class="num">0</span>));
 
@@ -1536,6 +1561,75 @@ fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">pro
 <span class="kw">const</span> pauseFire = () =&gt; fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">pause</span>());
 
 <span class="fn">viewTrigger</span>(<span class="str">'#sec-fire'</span>, { <span class="prop">enter</span>: playFire, <span class="prop">leave</span>: pauseFire });</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 06 Smoothing ---- -->
+    <section class="demo-section" id="sec-smooth">
+      <div class="demo-header">
+        <span class="demo-index">06</span>
+        <h2>Locked vs. smoothed</h2>
+        <span class="demo-tag">scroll · scrub</span>
+      </div>
+      <p class="demo-desc">Two identical timelines, one scroll range, two drivers. The left needle is welded to the scroll position; the right one lerps toward it with <em>smoothing: 150</em> — a time constant in milliseconds, so it closes ~63% of the gap every 150ms regardless of frame rate. Flick the page and watch the amber needle trail the teal one, then settle. Smoothing rides the shared ticker and unsubscribes the moment it catches up.</p>
+
+      <div class="scrub-track pinned" id="smooth-track">
+        <div class="scrub-sticky">
+          <div class="stage scrub-stage smooth-stage">
+            <div class="smooth-cell">
+              <div class="gauge">
+                <div class="gauge-arc"></div>
+                <i class="needle" id="needle-locked"></i>
+                <span class="gauge-hub"></span>
+              </div>
+              <div class="smooth-cap">
+                <span class="t">Locked</span>
+                <span class="s">smoothing: 0</span>
+              </div>
+              <span class="smooth-val" id="val-locked">0.000</span>
+            </div>
+            <div class="smooth-cell">
+              <div class="gauge">
+                <div class="gauge-arc"></div>
+                <i class="needle alt" id="needle-smooth"></i>
+                <span class="gauge-hub"></span>
+              </div>
+              <div class="smooth-cap">
+                <span class="t">Smoothed</span>
+                <span class="s">smoothing: 150</span>
+              </div>
+              <span class="smooth-val alt" id="val-smooth">0.000</span>
+            </div>
+          </div>
+          <div class="meter">
+            <span class="meter-label">scroll position</span>
+            <span class="meter-track"><i class="meter-fill"></i></span>
+            <span class="meter-num">0.000</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timelines()</summary>
+        <pre><code><span class="cm">// Same clip, twice — the only difference is the driver.</span>
+<span class="kw">const</span> dial = (target) =&gt;
+  <span class="fn">timeline</span>().<span class="fn">tween</span>(target, {
+    <span class="num">0</span>:   { <span class="prop">transform</span>: <span class="str">'rotate(-62deg)'</span> },
+    <span class="num">100</span>: { <span class="prop">transform</span>: <span class="str">'rotate(62deg)'</span> },
+  }, { <span class="prop">duration</span>: <span class="num">1000</span>, <span class="prop">easing</span>: <span class="str">'linear'</span> });
+
+<span class="kw">const</span> lockedTl = <span class="fn">dial</span>(<span class="str">'#needle-locked'</span>);
+<span class="kw">const</span> smoothTl = <span class="fn">dial</span>(<span class="str">'#needle-smooth'</span>);
+
+<span class="kw">const</span> range = { <span class="prop">trigger</span>: <span class="str">'#smooth-track'</span>, <span class="prop">start</span>: <span class="str">'top 15%'</span>, <span class="prop">end</span>: <span class="str">'bottom 77%'</span> };
+
+<span class="fn">scrollDriver</span>(lockedTl, { ...range, <span class="prop">smoothing</span>: <span class="num">0</span> });     <span class="cm">// welded to scroll</span>
+<span class="fn">scrollDriver</span>(smoothTl, { ...range, <span class="prop">smoothing</span>: <span class="num">150</span>,       <span class="cm">// ms time constant</span>
+  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-smooth'</span>) });                <span class="cm">// onProgress reports the raw scroll</span>
+
+<span class="cm">// Read the two playheads back out for the numbers under each gauge.</span>
+lockedTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; { lockedOut.textContent = lockedTl.<span class="fn">progress</span>().<span class="fn">toFixed</span>(<span class="num">3</span>); });
+smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; { smoothOut.textContent = smoothTl.<span class="fn">progress</span>().<span class="fn">toFixed</span>(<span class="num">3</span>); });</code></pre>
       </details>
     </section>
 
@@ -1692,6 +1786,31 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
 
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+    // The install line advertises `cursor: copy` and selects itself on click, so
+    // make the promise true. writeText is async and rejects on a denied
+    // permission or an insecure origin — fall back to leaving the text selected,
+    // which is what the element did on its own before.
+    const installValue = $('.install-value');
+    const installItem = installValue.closest('.install-item');
+    const installLabel = $('.install-label', installItem);
+    let copiedTimer = 0;
+    installValue.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(installValue.textContent.trim());
+        installItem.classList.add('copied');
+        installLabel.textContent = 'Copied ✓';
+        // Re-clicking mid-feedback would otherwise let the first timer end the
+        // second click's confirmation early.
+        clearTimeout(copiedTimer);
+        copiedTimer = setTimeout(() => {
+          installItem.classList.remove('copied');
+          installLabel.textContent = 'Install';
+        }, 1400);
+      } catch {
+        /* selection stands in for the copy */
+      }
+    });
 
     // Footer bookkeeping.
     const stats = { clips: 0, timelines: 0 };
@@ -1863,32 +1982,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 03 — Locked vs. smoothed
-    // ============================================================
-    const dial = (target) =>
-      timeline().tween(target, {
-        0: { transform: 'rotate(-62deg)' },
-        100: { transform: 'rotate(62deg)' },
-      }, { duration: 1000, easing: 'linear' });
-
-    const lockedTl = countTimeline(dial('#needle-locked'), 1);
-    const smoothTl = countTimeline(dial('#needle-smooth'), 1);
-
-    const smoothRange = { trigger: '#smooth-track', start: 'top 15%', end: 'bottom 77%' };
-    const lockedDriver = scrollDriver(lockedTl, { ...smoothRange, smoothing: 0 });
-    const smoothDriver = scrollDriver(smoothTl, {
-      ...smoothRange,
-      smoothing: 150,
-      onProgress: meter('sec-smooth'),
-    });
-
-    const lockedOut = $('#val-locked');
-    const smoothOut = $('#val-smooth');
-    lockedTl.on('update', () => { lockedOut.textContent = lockedTl.progress().toFixed(3); });
-    smoothTl.on('update', () => { smoothOut.textContent = smoothTl.progress().toFixed(3); });
-
-    // ============================================================
-    // 04 — A scene fired from a timeline position (call)
+    // 03 — A scene fired from a timeline position (call)
     // ============================================================
     const shardOrigin = $('#shard-origin');
     for (let i = 0; i < 16; i += 1) {
@@ -1948,7 +2042,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 05 — Your cursor is the playhead (hover-scrubbed studio preview)
+    // 04 — Your cursor is the playhead (hover-scrubbed studio preview)
     // ============================================================
 
     // Static sky and particle variation use the same seeded LCG pattern as the
@@ -2206,7 +2300,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 06 — A timeline that never ends (four coprime loops)
+    // 05 — A timeline that never ends (four coprime loops)
     // ============================================================
     // Static variation is seeded and stored in CSS custom properties. Every
     // element in a clip shares one FrameEngine, so per-element randomness does
@@ -2290,11 +2384,67 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
       return countTimeline(tl, 1);
     };
 
-    const flamesTl = loopTimeline(flameClip);
-    const embersTl = loopTimeline(emberClip);
-    const pinesTl = loopTimeline(pineClip);
-    const glowTl = loopTimeline(glowClip);
-    const fireTimelines = [flamesTl, embersTl, pinesTl, glowTl];
+    const fireClips = [flameClip, emberClip, pineClip, glowClip];
+    const fireTimelines = fireClips.map(loopTimeline);
+
+    // One lane per looping timeline, drawn from the same clip list. Track width
+    // is proportional to that timeline's own duration, so all four playheads
+    // travel at the same pixels-per-second and the wrap points are the only
+    // difference — the drift on screen is the real drift.
+    const fireLanes = $('#camp-lanes');
+    const fireLongest = Math.max(...fireTimelines.map((tl) => tl.duration));
+
+    function drawLane(label, ms) {
+      const lane = document.createElement('div');
+      lane.className = 'lane loop-lane';
+      lane.innerHTML =
+        `<span class="lane-name">${label}</span>` +
+        '<span class="loop-track"><i class="loop-fill"></i><i class="loop-head"></i></span>' +
+        `<span class="loop-meta">${ms}ms · <b>×0</b></span>`;
+      fireLanes.appendChild(lane);
+      return {
+        track: $('.loop-track', lane),
+        fill: $('.loop-fill', lane),
+        head: $('.loop-head', lane),
+        lapOut: $('b', lane),
+      };
+    }
+
+    fireTimelines.forEach((tl, i) => {
+      const { track, fill, head, lapOut } = drawLane(fireClips[i].name, tl.duration);
+      track.style.setProperty('--loop-w', `${(tl.duration / fireLongest) * 100}%`);
+
+      // A wrap is the only moment the playhead moves backwards: _advance seeks
+      // to the end, then to 0, then applies the rest of the frame. Counting it
+      // here keeps the lap number honest without polling.
+      let laps = 0;
+      let previous = 0;
+      tl.on('update', (time) => {
+        if (time < previous) lapOut.textContent = `×${(laps += 1)}`;
+        previous = time;
+        const percent = `${(time / tl.duration) * 100}%`;
+        head.style.left = percent;
+        fill.style.width = percent;
+      });
+    });
+
+    // The four periods only realign at their least common multiple. Counting it
+    // down makes "roughly 7.5 hours" checkable instead of a claim.
+    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    const fireCycle = fireTimelines.reduce((a, tl) => (a * tl.duration) / gcd(a, tl.duration), 1);
+    const realignOut = $('#camp-realign');
+    const fireClock = fireTimelines[0]; // all four start and stop together
+    let fireElapsed = 0;
+    let clockPrevious = 0;
+    fireClock.on('update', (time) => {
+      // Wrapped frames report time going backwards; add the period back on.
+      const step = time < clockPrevious ? time + fireClock.duration - clockPrevious : time - clockPrevious;
+      fireElapsed += step;
+      clockPrevious = time;
+      const left = Math.round((fireCycle - (fireElapsed % fireCycle)) / 1000);
+      const text = `realign in ${Math.floor(left / 3600)}h ${String(Math.floor(left / 60) % 60).padStart(2, '0')}m ${String(left % 60).padStart(2, '0')}s`;
+      if (text !== realignOut.textContent) realignOut.textContent = text;
+    });
 
     fireTimelines.forEach((tl) => tl.progress(0));
 
@@ -2302,6 +2452,31 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     const pauseFire = () => fireTimelines.forEach((tl) => tl.pause());
 
     viewTrigger('#sec-fire', { enter: playFire, leave: pauseFire });
+
+    // ============================================================
+    // 06 — Locked vs. smoothed
+    // ============================================================
+    const dial = (target) =>
+      timeline().tween(target, {
+        0: { transform: 'rotate(-62deg)' },
+        100: { transform: 'rotate(62deg)' },
+      }, { duration: 1000, easing: 'linear' });
+
+    const lockedTl = countTimeline(dial('#needle-locked'), 1);
+    const smoothTl = countTimeline(dial('#needle-smooth'), 1);
+
+    const smoothRange = { trigger: '#smooth-track', start: 'top 15%', end: 'bottom 77%' };
+    const lockedDriver = scrollDriver(lockedTl, { ...smoothRange, smoothing: 0 });
+    const smoothDriver = scrollDriver(smoothTl, {
+      ...smoothRange,
+      smoothing: 150,
+      onProgress: meter('sec-smooth'),
+    });
+
+    const lockedOut = $('#val-locked');
+    const smoothOut = $('#val-smooth');
+    lockedTl.on('update', () => { lockedOut.textContent = lockedTl.progress().toFixed(3); });
+    smoothTl.on('update', () => { smoothOut.textContent = smoothTl.progress().toFixed(3); });
 
     // ============================================================
     // 07 — Triggered, not scrubbed (viewTrigger → physics scene)
@@ -2402,7 +2577,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // Layout can settle after fonts load; every driver re-measures its range.
-    const drivers = [heroDriver, cardsDriver, lockedDriver, smoothDriver, fuseDriver];
+    const drivers = [heroDriver, cardsDriver, fuseDriver, lockedDriver, smoothDriver];
     window.addEventListener('load', () => drivers.forEach((d) => d.refresh()));
   </script>
 </body>
