@@ -16,9 +16,13 @@
  */
 
 import { ticker } from '@magic-spells/animation-engine';
+import { viewportMetrics } from './viewport-metrics.js';
 
 /** Below this gap the smoothed playhead snaps to target and unsubscribes. */
 const SNAP_EPSILON = 0.0005;
+
+/** Px the range must move before `refresh()` re-asserts the playhead. */
+const RANGE_EPSILON = 0.5;
 
 /** Alignment keywords → fraction of the box (vertical axis). */
 const KEYWORDS = {
@@ -203,11 +207,21 @@ class ScrollDriver {
   /**
    * Recompute the px range and re-apply the current scroll position. Runs on
    * resize; call it manually after any layout change.
+   *
+   * The re-seek is forced only when the range actually moved. Mobile chrome
+   * sliding away fires resize continuously, and forcing there would snap every
+   * smoothed driver on the page mid-ease for a range that never changed —
+   * `RANGE_EPSILON` covers the sub-pixel jitter that animation produces.
    */
   refresh() {
     if (this._destroyed) return;
+    const prevStart = this._startPx;
+    const prevEnd = this._endPx;
     this._recompute();
-    this._apply(true);
+    const moved =
+      Math.abs(this._startPx - prevStart) > RANGE_EPSILON ||
+      Math.abs(this._endPx - prevEnd) > RANGE_EPSILON;
+    this._apply(moved);
   }
 
   /** Unbind every listener and ticker subscription; the timeline keeps its state. */
@@ -240,6 +254,10 @@ class ScrollDriver {
   _viewportHeight() {
     const s = this._scroller;
     if (!s) return 0;
+    // Identity, not duck-typing: only the real window gets the stable 100svh
+    // measurement. Window-shaped objects (test fakes, custom hosts) keep
+    // reporting their own innerHeight.
+    if (typeof window !== 'undefined' && s === window) return viewportMetrics.height();
     if (typeof s.innerHeight === 'number') return s.innerHeight;
     if (typeof s.clientHeight === 'number') return s.clientHeight;
     return 0;
@@ -302,9 +320,22 @@ class ScrollDriver {
     return clamp01((this._scrollPos() - this._startPx) / range);
   }
 
-  /** rAF-throttle in browsers; apply synchronously where there is no rAF. */
+  /**
+   * rAF-throttle in browsers; apply synchronously where there is no rAF.
+   *
+   * A driver whose range is off-screen sits pinned at 0 or 1 and would burn a
+   * frame per scroll event re-deriving the same number, so it skips the frame
+   * entirely. Any scroll that moves progress or zone falls through, which is
+   * what keeps a jump across the whole range firing both edge callbacks.
+   */
   _schedule() {
     if (this._destroyed) return;
+
+    // Safe only because progress is a pure function of scroll position against
+    // the cached px range — no layout reads here, nothing else to observe.
+    const next = this._computeProgress();
+    if (next === this._progress && zoneOf(next) === this._zone && (next === 0 || next === 1)) return;
+
     if (!hasRAF()) {
       this._apply(false);
       return;
@@ -338,7 +369,8 @@ class ScrollDriver {
 
   /**
    * Map the live scroll position, fire boundary callbacks, drive the timeline.
-   * @param {boolean} force - Seek even if progress is unchanged (post-refresh).
+   * @param {boolean} force - Seek even if progress is unchanged. Only
+   *   `refresh()` passes true, and only when the px range actually moved.
    */
   _apply(force) {
     const next = this._computeProgress();
@@ -357,10 +389,11 @@ class ScrollDriver {
     if (this._smoothing > 0) {
       this._target = next;
 
-      // `force` only ever comes from `refresh()`, i.e. the layout moved under
-      // us. Easing from `_current` would be easing from a position the old
-      // range produced, so snap instead — and seek here, because this branch
-      // returns before the `changed || force` seek below.
+      // `force` only ever comes from a `refresh()` that found a moved range,
+      // i.e. the layout shifted under us. Easing from `_current` would be
+      // easing from a position the old range produced, so snap instead — and
+      // seek here, because this branch returns before the `changed || force`
+      // seek below.
       if (force) {
         this._current = next;
         this._stopSmoothing();

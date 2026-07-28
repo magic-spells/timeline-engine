@@ -283,6 +283,10 @@ export interface ScrollDriverOptions {
    * (`scrollY`/`pageYOffset`/`scrollTop`), a viewport size
    * (`innerHeight`/`clientHeight`) and add/removeEventListener works —
    * tests pass fake scroller objects.
+   *
+   * The real window is measured with a hidden `100svh` probe rather than
+   * `innerHeight`, so mobile chrome showing/hiding doesn't move the range
+   * mid-scroll. Zero config; other scrollers report their own height.
    */
   scroller?: Element | Window | Record<string, any>;
   /**
@@ -317,8 +321,11 @@ export class ScrollDriver {
   readonly progress: number;
   /**
    * Recompute the px range and re-assert the playhead (call after layout
-   * changes; auto on resize, rAF-throttled). On a smoothed driver this snaps
-   * rather than easing, so it still re-seeks when mapped progress is unchanged.
+   * changes; auto on resize, rAF-throttled). The re-seek is forced only when
+   * the range actually moved — a refresh that finds the same range does
+   * nothing, so a mobile resize storm can't snap a smoothed driver mid-ease.
+   * When it did move, a smoothed driver snaps rather than easing from a
+   * position the old range produced.
    */
   refresh(): void;
   /** Unbind all listeners; the timeline keeps its last state. */
