@@ -26,13 +26,27 @@ Or self-contained via script tag (global `TimelineEngine`):
 <script src="https://unpkg.com/@magic-spells/timeline-engine"></script>
 ```
 
-The script-tag build **inlines animation-engine**, so it re-exports `scene`, `ticker` and
-`rand` for you. Reach for those rather than loading animation-engine with a second script
-tag — two copies means two ticker singletons and two rAF loops, and `ticker.timeScale`
-would move one and not the other:
+The script-tag build **inlines animation-engine** (14.2 kB gzipped, vs 5.4 kB for the
+npm build, which leaves its `@magic-spells/*` deps external), so it re-exports `scene`,
+`ticker`, `rand` and `registerPhysics` for you. Reach for those rather than loading
+animation-engine with a second script tag — two copies means two ticker singletons and
+two rAF loops, and `ticker.timeScale` would move one and not the other:
 
 ```js
 const { timeline, scene, ticker } = TimelineEngine;  // one bundle, one ticker
+```
+
+It does **not** bundle the spring. If you want `{ physics }` scene steps, add
+physics-engine's own script tag — it's dependency-free and has no singleton, so a second
+script is harmless here — and register it through us:
+
+```html
+<script src="https://unpkg.com/@magic-spells/physics-engine"></script>
+<script src="https://unpkg.com/@magic-spells/timeline-engine"></script>
+```
+
+```js
+TimelineEngine.registerPhysics(PhysicsEngine);  // once, before any physics step
 ```
 
 ## Quick start
@@ -141,9 +155,16 @@ position-at-time, so it can't be sampled at an arbitrary playhead. Springs aren'
 out, though: **trigger** an animation-engine scene from the timeline or the viewport and
 it plays forward in real time, physics included.
 
+Physics is no longer bundled. As of animation-engine 0.2.0 the spring is injected —
+install `@magic-spells/physics-engine` and register it once, or a `{ physics }` step
+throws.
+
 ```js
-import { scene } from '@magic-spells/animation-engine';
+import { scene, registerPhysics } from '@magic-spells/animation-engine';
+import PhysicsEngine from '@magic-spells/physics-engine';
 import { timeline, viewTrigger } from '@magic-spells/timeline-engine';
+
+registerPhysics(PhysicsEngine); // springs are opt-in — register once
 
 const pop = scene().to('.bubble', { transform: 'scale(1)' }, { physics: { friction: 0.12 } });
 

@@ -28,6 +28,14 @@ animation-engine scenes are still first-class: trigger them from a timeline posi
 (`call`) or from the viewport (`viewTrigger`) and they play forward in real time. This split
 (scrub = deterministic beziers, trigger = anything) is the intended way to combine the two.
 
+Physics is **injected, not depended on**. animation-engine 0.2.0 defines the spring
+contract and dropped its hard dependency on physics-engine; `registerPhysics(PhysicsEngine)`
+supplies the implementation, and a `{ physics }` step with nothing registered throws. We
+carry no runtime dependency on physics-engine at all — the entry point just re-exports
+`registerPhysics` alongside `scene`/`ticker`/`rand`, so a consumer who wants springs
+registers *their* physics-engine into *our* copy of the engine (see the re-export note
+below for why that indirection matters).
+
 **Clip windows and fill.** A clip occupies `[at, at + duration]`. Outside its window, `fill`
 decides: `'both'` (default) holds the 0%/100% frames — before its window a clip pins its
 start state, after it holds its end state, which is what scroll storytelling wants.
@@ -71,8 +79,18 @@ only — scroll driving ignores loop). `destroy()` releases the subscription.
 "One rAF loop" is only true if the page has **one copy** of animation-engine. The UMD
 build inlines it (ticker singleton included), so a page loading both that bundle and a
 separate animation-engine script gets two tickers — which is exactly the bug the demo
-shipped with. Hence the entry point re-exports `scene`/`ticker`/`rand`: script-tag
-consumers reach the engine through us instead of loading it twice.
+shipped with. Hence the entry point re-exports `scene`/`ticker`/`rand`/`registerPhysics`:
+script-tag consumers reach the engine through us instead of loading it twice.
+
+The UMD no longer inlines the spring, so a script-tag page that wants physics loads
+physics-engine separately — the demo does, from vendored `demo/vendor/physics-engine.min.js`
+— and then calls `TimelineEngine.registerPhysics(PhysicsEngine)`. **That second script is
+safe, and the vendored animation-engine was not**: the two-ticker bug was about
+animation-engine's module-level `ticker` singleton, which a duplicate copy duplicates.
+physics-engine has no singleton and no shared state — it's a dependency-free class you
+instantiate — so a second copy has nothing to fight over. Don't generalize "we removed a
+vendored script once" into "never vendor a script"; the distinguishing question is whether
+the module owns process-wide state.
 
 **`_advance` is symmetric.** It picks its bound from the sign of the step, so a negative
 `timeScale` is real reverse playback that settles at 0 (or wraps `0 → duration` when
@@ -133,6 +151,10 @@ clip state that can't serialize (functions, element refs) without a string form.
 - `npm run build` — TWO Vite passes keyed off `BUILD_FORMAT`: `es` (externalizes
   `@magic-spells/*` deps) then `umd` (self-contained `dist/timeline-engine.min.js`,
   global `TimelineEngine`). Keep the split — same rationale as animation-engine.
+  Sizes as of 0.1.1: ~5.4 kB gz es, ~14.2 kB gz umd (spring not included). The demo
+  hero's "Size (gzip)" chip and the README's install section quote these numbers by
+  hand — re-measure (`gzip -c dist/… | wc -c`) and update both when the bundle changes
+  materially; the chip once sat at a stale 10.3 kB through a whole round of bug fixes.
 
 ## Demo & GitHub Pages
 
@@ -142,9 +164,14 @@ so **`dist/` is committed deliberately** and **the demo loads the UMD via script
 (`src/` bare-imports `@magic-spells/*` deps a static host can't resolve). Rebuild + commit
 `dist/` alongside any change meant to show up in the demo.
 
-The demo loads **only** that one bundle and takes `scene` from `TimelineEngine`. It used
-to also load a vendored `animation-engine.min.js`, which gave the page two tickers; don't
-reintroduce a second engine script.
+The demo takes `scene` from `TimelineEngine` and loads exactly two scripts: our UMD and
+`demo/vendor/physics-engine.min.js`. It used to also load a vendored
+`animation-engine.min.js`, which gave the page two tickers; don't reintroduce a second
+*engine* script. The physics vendoring is deliberate and must ship with the demo —
+GitHub Pages serves this folder as static files and can't reach `node_modules`, so
+physics-engine is a devDependency (the source of that copy) and gets committed under
+`demo/vendor/`. Re-copy it from `node_modules` when the version bumps, keeping the header
+comment.
 
 ## Conventions
 

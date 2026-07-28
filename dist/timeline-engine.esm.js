@@ -1,8 +1,8 @@
 import e from "@magic-spells/event-emitter";
-import { fillSparseKeyframes as t, rand as n, resolveEasing as r, scene as i, ticker as a, ticker as o } from "@magic-spells/animation-engine";
-import s from "@magic-spells/frame-engine";
+import { fillSparseKeyframes as t, rand as n, registerPhysics as r, resolveEasing as i, scene as a, ticker as o, ticker as s } from "@magic-spells/animation-engine";
+import c from "@magic-spells/frame-engine";
 //#region src/clip.js
-function c(e) {
+function l(e) {
 	if (e == null) return [];
 	if (typeof e == "string") {
 		if (typeof document > "u" || !document.querySelectorAll) return [];
@@ -11,27 +11,27 @@ function c(e) {
 	}
 	return Array.isArray(e) ? e : typeof e.length == "number" && typeof e != "function" && e.style === void 0 && e.nodeType === void 0 ? Array.from(e) : [e];
 }
-function l(e) {
-	return typeof e == "function" ? e() : e;
-}
 function u(e) {
-	let t = {};
-	for (let n in e) t[n] = l(e[n]);
-	return t;
+	return typeof e == "function" ? e() : e;
 }
 function d(e) {
 	let t = {};
 	for (let n in e) t[n] = u(e[n]);
 	return t;
 }
-function f({ kind: e, target: n, keyframes: i, styles: a, at: o, duration: l, easing: f, fill: p, stagger: m }) {
-	let h = c(n), g = e === "set" ? (() => {
-		let e = u(a);
+function f(e) {
+	let t = {};
+	for (let n in e) t[n] = d(e[n]);
+	return t;
+}
+function p({ kind: e, target: n, keyframes: r, styles: a, at: o, duration: s, easing: u, fill: p, stagger: m }) {
+	let h = l(n), g = e === "set" ? (() => {
+		let e = d(a);
 		return {
 			0: e,
 			100: e
 		};
-	})() : d(i), _ = new s(t(g));
+	})() : f(r), _ = new c(t(g));
 	return {
 		kind: e,
 		target: n,
@@ -40,42 +40,42 @@ function f({ kind: e, target: n, keyframes: i, styles: a, at: o, duration: l, ea
 		styles: e === "set" ? g[0] : null,
 		fe: _,
 		at: o,
-		duration: l,
-		easingSpec: f,
-		easing: f === void 0 ? (e) => e : r(f),
+		duration: s,
+		easingSpec: u,
+		easing: u === void 0 ? (e) => e : i(u),
 		fill: p,
 		stagger: m || 0,
 		frame0: _.getFrame(0),
 		frame1: _.getFrame(1)
 	};
 }
-function p(e, t) {
+function m(e, t) {
 	let n = Math.max(e.elements.length - 1, 0), r = e.stagger >= 0 ? t : n - t;
 	return e.at + r * Math.abs(e.stagger);
 }
-function m(e) {
+function h(e) {
 	let t = Math.max(e.elements.length - 1, 0);
-	return p(e, e.stagger >= 0 ? t : 0) + e.duration;
-}
-function h(e, t, n) {
-	let r = p(e, t);
-	return n < r ? -1 : +(n > r + e.duration);
+	return m(e, e.stagger >= 0 ? t : 0) + e.duration;
 }
 function g(e, t, n) {
-	let r = h(e, t, n);
+	let r = m(e, t);
+	return n < r ? -1 : +(n > r + e.duration);
+}
+function _(e, t, n) {
+	let r = g(e, t, n);
 	if (r === -1) return e.fill === "both" || e.fill === "backwards" ? e.frame0 : null;
 	if (r === 1) return e.fill === "both" || e.fill === "forwards" ? e.frame1 : null;
-	let i = p(e, t), a = e.duration > 0 ? (n - i) / e.duration : 1;
+	let i = m(e, t), a = e.duration > 0 ? (n - i) / e.duration : 1;
 	return e.fe.getFrame(e.easing(a));
 }
 //#endregion
 //#region src/timeline.js
-var _ = 1e3, v = "ease";
-function y(e, t, n = {}) {
+var v = 1e3, y = "ease";
+function b(e, t, n = {}) {
 	for (let r in n) r in t || (r.startsWith("--") && typeof e.style.removeProperty == "function" ? e.style.removeProperty(r) : e.style[r] = "");
 	for (let r in t) n[r] !== t[r] && (r.startsWith("--") && typeof e.style.setProperty == "function" ? e.style.setProperty(r, String(t[r])) : e.style[r] = t[r]);
 }
-var b = class t extends e {
+var x = class t extends e {
 	constructor(e = {}) {
 		super(), this._defaults = e.defaults ?? {}, this._loop = e.loop ?? 1, this._clips = [], this._calls = [], this._labels = {}, this._time = 0, this._timeScale = 1, this._applied = !1, this._written = /* @__PURE__ */ new WeakMap(), this._playing = !1, this._playPromise = null, this._resolvePlay = null, this._onTick = null, this._iteration = 0, this._destroyed = !1, this._sorted = null, this._duration = null;
 	}
@@ -85,10 +85,10 @@ var b = class t extends e {
 			target: e,
 			keyframes: t,
 			at: this._resolveAt(n.at),
-			duration: l(n.duration) ?? l(this._defaults.duration) ?? _,
-			easing: n.easing ?? this._defaults.easing ?? v,
+			duration: u(n.duration) ?? u(this._defaults.duration) ?? v,
+			easing: n.easing ?? this._defaults.easing ?? y,
 			fill: n.fill ?? "both",
-			stagger: l(n.stagger) ?? 0
+			stagger: u(n.stagger) ?? 0
 		}), this;
 	}
 	fromTo(e, t, n, r = {}) {
@@ -124,7 +124,7 @@ var b = class t extends e {
 	get duration() {
 		if (this._duration === null) {
 			let e = 0;
-			for (let t of this._clips) e = Math.max(e, m(t));
+			for (let t of this._clips) e = Math.max(e, h(t));
 			this._duration = e;
 		}
 		return this._duration;
@@ -136,13 +136,13 @@ var b = class t extends e {
 		let t = /* @__PURE__ */ new Map(), n = this._sortedClips();
 		for (let r of n) r.elements.forEach((n, i) => {
 			let a = t.get(n);
-			if (a === void 0 && (a = {}, t.set(n, a)), h(r, i, e) === 0) return;
-			let o = g(r, i, e);
+			if (a === void 0 && (a = {}, t.set(n, a)), g(r, i, e) === 0) return;
+			let o = _(r, i, e);
 			o && Object.assign(a, o);
 		});
 		for (let r of n) r.elements.forEach((n, i) => {
-			if (h(r, i, e) !== 0) return;
-			let a = t.get(n), o = g(r, i, e);
+			if (g(r, i, e) !== 0) return;
+			let a = t.get(n), o = _(r, i, e);
 			o && Object.assign(a, o);
 		});
 		let r = [];
@@ -179,7 +179,7 @@ var b = class t extends e {
 			} catch (e) {
 				console.error(e);
 			}
-		}, o.subscribe(this._onTick), this._playPromise;
+		}, s.subscribe(this._onTick), this._playPromise;
 	}
 	pause() {
 		return this._playing && this._settle(!1), this;
@@ -226,7 +226,7 @@ var b = class t extends e {
 		return n;
 	}
 	_resolveAt(e) {
-		let t = l(e);
+		let t = u(e);
 		if (t == null) return this.duration;
 		if (typeof t == "string") {
 			if (!(t in this._labels)) throw Error(`Timeline: unknown label "${t}".`);
@@ -235,7 +235,7 @@ var b = class t extends e {
 		return t;
 	}
 	_addClip(e) {
-		this._clips.push(f(e)), this._sorted = null, this._duration = null;
+		this._clips.push(p(e)), this._sorted = null, this._duration = null;
 	}
 	_sortedClips() {
 		return this._sorted === null && (this._sorted = this._clips.map((e, t) => ({
@@ -246,7 +246,7 @@ var b = class t extends e {
 	_seek(e, t, n) {
 		if (this._destroyed) return this;
 		let r = this._time;
-		for (let { element: t, styles: n } of this.getFrames(e)) y(t, n, this._written.get(t)), this._written.set(t, { ...n });
+		for (let { element: t, styles: n } of this.getFrames(e)) b(t, n, this._written.get(t)), this._written.set(t, { ...n });
 		if (this._time = e, this._applied = !0, t || this._fireCalls(r, e), n) try {
 			this.emit("seek", e);
 		} catch (e) {
@@ -293,7 +293,7 @@ var b = class t extends e {
 		}
 	}
 	_settle(e) {
-		this._onTick &&= (o.unsubscribe(this._onTick), null), this._playing = !1;
+		this._onTick &&= (s.unsubscribe(this._onTick), null), this._playing = !1;
 		let t = this._resolvePlay;
 		this._resolvePlay = null, this._playPromise = null;
 		try {
@@ -302,7 +302,7 @@ var b = class t extends e {
 			t && t();
 		}
 	}
-}, x = 5e-4, S = {
+}, S = 5e-4, C = {
 	top: 0,
 	start: 0,
 	center: .5,
@@ -310,29 +310,29 @@ var b = class t extends e {
 	bottom: 1,
 	end: 1
 };
-function C(e) {
+function w(e) {
 	return e < 0 ? 0 : e > 1 ? 1 : e;
 }
-function w() {
+function T() {
 	return typeof requestAnimationFrame == "function";
 }
-function T(e, t) {
+function E(e, t) {
 	if (typeof e == "function") try {
 		e(t);
 	} catch (e) {
 		console.error(e);
 	}
 }
-function E(e, t) {
+function D(e, t) {
 	let n = e.toLowerCase();
-	if (n in S) return S[n];
+	if (n in C) return C[n];
 	if (n.endsWith("%")) {
 		let e = parseFloat(n);
 		if (!Number.isNaN(e)) return e / 100;
 	}
 	throw Error(`ScrollDriver: unrecognised scroll point "${e}" in "${t}" — use top | center | bottom or a percentage like "25%".`);
 }
-function D(e) {
+function O(e) {
 	if (typeof e == "function") return {
 		kind: "fn",
 		fn: e
@@ -343,7 +343,7 @@ function D(e) {
 	};
 	if (typeof e != "string") throw Error(`ScrollDriver: invalid scroll point ${String(e)}.`);
 	let t = e.trim().split(/\s+/);
-	if (t.length === 1 && !t[0].endsWith("%") && !(t[0].toLowerCase() in S)) {
+	if (t.length === 1 && !t[0].endsWith("%") && !(t[0].toLowerCase() in C)) {
 		let e = parseFloat(t[0]);
 		if (!Number.isNaN(e)) return {
 			kind: "px",
@@ -352,13 +352,13 @@ function D(e) {
 	}
 	return {
 		kind: "align",
-		trigger: E(t[0], e),
-		viewport: E(t[1] === void 0 ? "top" : t[1], e)
+		trigger: D(t[0], e),
+		viewport: D(t[1] === void 0 ? "top" : t[1], e)
 	};
 }
-var O = class {
+var k = class {
 	constructor(e, t = {}) {
-		this._timeline = e, this._options = t, this._scroller = t.scroller ?? (typeof window < "u" ? window : null), this._trigger = A(t.trigger), this._start = D(t.start ?? "top bottom"), this._end = D(t.end ?? "bottom top"), this._smoothing = t.smoothing ?? 0, this._silent = t.silent ?? !1, this._startPx = 0, this._endPx = 0, this._progress = 0, this._zone = 0, this._current = 0, this._target = 0, this._unsubscribe = null, this._rafId = null, this._resizeRafId = null, this._destroyed = !1, this._onScroll = () => this._schedule(), this._onResize = () => this._scheduleRefresh(), this._onTick = (e) => this._smooth(e), this._recompute(), this._progress = this._computeProgress(), this._zone = k(this._progress), this._current = this._progress, this._target = this._progress, this._seek(this._progress, !0), this._attach();
+		this._timeline = e, this._options = t, this._scroller = t.scroller ?? (typeof window < "u" ? window : null), this._trigger = j(t.trigger), this._start = O(t.start ?? "top bottom"), this._end = O(t.end ?? "bottom top"), this._smoothing = t.smoothing ?? 0, this._silent = t.silent ?? !1, this._startPx = 0, this._endPx = 0, this._progress = 0, this._zone = 0, this._current = 0, this._target = 0, this._unsubscribe = null, this._rafId = null, this._resizeRafId = null, this._destroyed = !1, this._onScroll = () => this._schedule(), this._onResize = () => this._scheduleRefresh(), this._onTick = (e) => this._smooth(e), this._recompute(), this._progress = this._computeProgress(), this._zone = A(this._progress), this._current = this._progress, this._target = this._progress, this._seek(this._progress, !0), this._attach();
 	}
 	get progress() {
 		return this._progress;
@@ -412,11 +412,11 @@ var O = class {
 	}
 	_computeProgress() {
 		let e = this._endPx - this._startPx;
-		return e === 0 ? +(this._scrollPos() >= this._startPx) : C((this._scrollPos() - this._startPx) / e);
+		return e === 0 ? +(this._scrollPos() >= this._startPx) : w((this._scrollPos() - this._startPx) / e);
 	}
 	_schedule() {
 		if (!this._destroyed) {
-			if (!w()) {
+			if (!T()) {
 				this._apply(!1);
 				return;
 			}
@@ -427,7 +427,7 @@ var O = class {
 	}
 	_scheduleRefresh() {
 		if (!this._destroyed) {
-			if (!w()) {
+			if (!T()) {
 				this.refresh();
 				return;
 			}
@@ -439,24 +439,24 @@ var O = class {
 	_apply(e) {
 		let t = this._computeProgress(), n = t !== this._progress;
 		this._progress = t;
-		let r = k(t);
+		let r = A(t);
 		if (r !== this._zone) {
 			let e = this._zone;
 			this._zone = r, this._fireZone(e, r);
 		}
-		if (n && T(this._options.onProgress, t), this._smoothing > 0) {
+		if (n && E(this._options.onProgress, t), this._smoothing > 0) {
 			if (this._target = t, e) {
 				this._current = t, this._stopSmoothing(), this._seek(t);
 				return;
 			}
-			Math.abs(this._target - this._current) > x && this._startSmoothing();
+			Math.abs(this._target - this._current) > S && this._startSmoothing();
 			return;
 		}
 		(n || e) && (this._current = t, this._seek(t));
 	}
 	_fireZone(e, t) {
 		let n = this._options;
-		t > e ? (e === -1 && T(n.onEnter), t === 1 && T(n.onLeave)) : (e === 1 && T(n.onEnterBack), t === -1 && T(n.onLeaveBack));
+		t > e ? (e === -1 && E(n.onEnter), t === 1 && E(n.onLeave)) : (e === 1 && E(n.onEnterBack), t === -1 && E(n.onLeaveBack));
 	}
 	_seek(e, t = !1) {
 		let n = this._timeline;
@@ -470,7 +470,7 @@ var O = class {
 		}
 	}
 	_startSmoothing() {
-		this._unsubscribe || this._destroyed || (this._unsubscribe = o.subscribe(this._onTick));
+		this._unsubscribe || this._destroyed || (this._unsubscribe = s.subscribe(this._onTick));
 	}
 	_stopSmoothing() {
 		this._unsubscribe &&= (this._unsubscribe(), null);
@@ -478,7 +478,7 @@ var O = class {
 	_smooth(e) {
 		try {
 			let t = this._target - this._current;
-			if (Math.abs(t) <= x) {
+			if (Math.abs(t) <= S) {
 				this._current !== this._target && (this._current = this._target, this._seek(this._current)), this._stopSmoothing();
 				return;
 			}
@@ -500,18 +500,18 @@ var O = class {
 		t && typeof t.removeEventListener == "function" && t.removeEventListener("resize", this._onResize), this._resizeTarget = null;
 	}
 };
-function k(e) {
+function A(e) {
 	return e >= 1 ? 1 : e <= 0 ? -1 : 0;
 }
-function A(e) {
+function j(e) {
 	return e == null ? null : typeof e == "string" ? typeof document < "u" && document.querySelector ? document.querySelector(e) : null : e;
 }
 //#endregion
 //#region src/view-trigger.js
-function j(e, t = {}) {
+function M(e, t = {}) {
 	let { enter: n, leave: r, once: i = !1, threshold: a = 0, rootMargin: o = "0px" } = t, s = globalThis.IntersectionObserver;
 	if (typeof s != "function") throw Error("viewTrigger: IntersectionObserver is not available in this environment.");
-	let l = c(e), u = /* @__PURE__ */ new Set(), d = /* @__PURE__ */ new Set(), f = l.length, p = !1, m = new s((e) => {
+	let c = l(e), u = /* @__PURE__ */ new Set(), d = /* @__PURE__ */ new Set(), f = c.length, p = !1, m = new s((e) => {
 		for (let t of e) {
 			if (p) return;
 			let e = t.target;
@@ -524,7 +524,7 @@ function j(e, t = {}) {
 		threshold: a,
 		rootMargin: o
 	});
-	for (let e of l) m.observe(e);
+	for (let e of c) m.observe(e);
 	function h() {
 		p || (p = !0, m.disconnect());
 	}
@@ -532,14 +532,14 @@ function j(e, t = {}) {
 }
 //#endregion
 //#region src/timeline-engine.js
-function M(e) {
-	return new b(e);
-}
 function N(e) {
-	return b.fromJSON(e);
+	return new x(e);
 }
-function P(e, t) {
-	return new O(e, t);
+function P(e) {
+	return x.fromJSON(e);
+}
+function F(e, t) {
+	return new k(e, t);
 }
 //#endregion
-export { O as ScrollDriver, b as Timeline, N as fromJSON, n as rand, i as scene, P as scrollDriver, a as ticker, M as timeline, j as viewTrigger };
+export { k as ScrollDriver, x as Timeline, P as fromJSON, n as rand, r as registerPhysics, a as scene, F as scrollDriver, o as ticker, N as timeline, M as viewTrigger };

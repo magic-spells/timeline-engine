@@ -8,7 +8,9 @@
  * (`scrollDriver`). Physics steps are deliberately unsupported on the scrubbed
  * path — a spring has no closed-form position-at-time — but physics-based
  * animation-engine scenes can be *triggered* from the timeline (`call`) or from
- * the viewport (`viewTrigger`) and play forward in real time.
+ * the viewport (`viewTrigger`) and play forward in real time. Physics is not
+ * bundled: install `@magic-spells/physics-engine` and hand it to the
+ * re-exported `registerPhysics` once, or a `{ physics }` step throws.
  */
 
 /**
@@ -143,7 +145,8 @@ export class Timeline {
    * Register a callback fired when the playhead crosses its time in either
    * direction (during `seek` or timed playback). Receives the crossing
    * direction: 1 forward, -1 backward. Use it to trigger animation-engine
-   * scenes — including physics ones — from a timeline position.
+   * scenes — including physics ones, once a physics implementation has been
+   * handed to `registerPhysics` — from a timeline position.
    */
   call(fn: (direction: 1 | -1) => void, opts?: CallOptions): this;
 
@@ -360,5 +363,11 @@ export function viewTrigger(
  * than loading animation-engine with a second script tag: two copies means two
  * ticker singletons and two rAF loops, and `ticker.timeScale` would move one
  * and not the other.
+ *
+ * `registerPhysics` is the injection point for the spring implementation,
+ * which animation-engine 0.2.0 no longer bundles: pass it
+ * `@magic-spells/physics-engine` (or the `PhysicsEngine` global from its UMD)
+ * once, before any `{ physics }` scene step runs. It must be *this* copy of
+ * the engine, hence the re-export.
  */
-export { scene, ticker, rand } from '@magic-spells/animation-engine';
+export { scene, ticker, rand, registerPhysics } from '@magic-spells/animation-engine';

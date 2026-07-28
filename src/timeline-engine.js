@@ -21,7 +21,16 @@ import { viewTrigger } from './view-trigger.js';
 // tickers and two rAF loops — `ticker.timeScale` would then move one and not
 // the other. Reaching the engine through this entry point is the only way a
 // script-tag consumer can be sure it shares our ticker.
-import { scene, ticker, rand } from '@magic-spells/animation-engine';
+//
+// `registerPhysics` rides along for the same reason. As of animation-engine
+// 0.2.0 the spring implementation is injected, not bundled: physics-engine is
+// a peer the consumer supplies, and a `{ physics }` scene step throws until it
+// is registered. A script-tag page loads physics-engine's own UMD (global
+// `PhysicsEngine` — dependency-free, no singleton, so a second script tag is
+// harmless here) and registers it through *our* copy of the engine:
+// `TimelineEngine.registerPhysics(PhysicsEngine)`. Registering through a
+// separately-loaded animation-engine would register into the wrong module.
+import { scene, ticker, rand, registerPhysics } from '@magic-spells/animation-engine';
 
 /**
  * Create a new Timeline. See the Timeline constructor for the options shape.
@@ -52,4 +61,4 @@ function scrollDriver(tl, options) {
 }
 
 export { timeline, Timeline, fromJSON, scrollDriver, ScrollDriver, viewTrigger };
-export { scene, ticker, rand };
+export { scene, ticker, rand, registerPhysics };
