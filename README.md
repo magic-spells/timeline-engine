@@ -26,7 +26,7 @@ Or self-contained via script tag (global `TimelineEngine`):
 <script src="https://unpkg.com/@magic-spells/timeline-engine"></script>
 ```
 
-The script-tag build **inlines animation-engine** (14.2 kB gzipped, vs 5.4 kB for the
+The script-tag build **inlines animation-engine** (14.6 kB gzipped, vs 5.8 kB for the
 npm build, which leaves its `@magic-spells/*` deps external), so it re-exports `scene`,
 `ticker`, `rand` and `registerPhysics` for you. Reach for those rather than loading
 animation-engine with a second script tag — two copies means two ticker singletons and

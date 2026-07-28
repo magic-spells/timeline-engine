@@ -180,7 +180,7 @@ clip state that can't serialize (functions, element refs) without a string form.
 - `npm run build` — TWO Vite passes keyed off `BUILD_FORMAT`: `es` (externalizes
   `@magic-spells/*` deps) then `umd` (self-contained `dist/timeline-engine.min.js`,
   global `TimelineEngine`). Keep the split — same rationale as animation-engine.
-  Sizes as of 0.1.1: ~5.4 kB gz es, ~14.2 kB gz umd (spring not included). The demo
+  Sizes as of 0.1.1: ~5.8 kB gz es, ~14.6 kB gz umd (spring not included). The demo
   hero's "Size (gzip)" chip and the README's install section quote these numbers by
   hand — re-measure (`gzip -c dist/… | wc -c`) and update both when the bundle changes
   materially; the chip once sat at a stale 10.3 kB through a whole round of bug fixes.
