@@ -1136,7 +1136,7 @@
     </div>
     <div class="install-item install-item-size">
       <span class="install-label">Size (gzip)</span>
-      <span class="install-size">10.3 kB</span>
+      <span class="install-size">5.4 kB esm · 14.2 kB umd</span>
     </div>
     <div class="install-item install-item-deps">
       <span class="install-label">Uses</span>
@@ -1342,6 +1342,7 @@ cardsTl.<span class="fn">tween</span>(<span class="str">'.stagger-card'</span>, 
       <details class="code-aside">
         <summary>view the timeline() + call()</summary>
         <pre><code><span class="cm">// The physics half: a spring burst, built once, replayed on every crossing.</span>
+<span class="cm">// (Springs are opt-in — registerPhysics(PhysicsEngine) ran once at page setup.)</span>
 <span class="kw">const</span> burst = <span class="fn">scene</span>()
   .<span class="fn">stagger</span>(shards, (el, i) =&gt; {
     <span class="kw">const</span> angle = (i / shards.length) * Math.PI * <span class="num">2</span>;
@@ -1680,7 +1681,11 @@ smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; 
       <details class="code-aside">
         <summary>view the scene() + viewTrigger()</summary>
         <pre><code><span class="cm">// scene comes from timeline-engine's bundle — same ticker, one rAF loop.</span>
-<span class="kw">const</span> { scene, viewTrigger } = TimelineEngine;
+<span class="kw">const</span> { scene, viewTrigger, registerPhysics } = TimelineEngine;
+
+<span class="cm">// Springs are opt-in as of animation-engine 0.2.0: register an implementation</span>
+<span class="cm">// once, or a { physics } step throws. PhysicsEngine is its own script tag.</span>
+<span class="fn">registerPhysics</span>(PhysicsEngine);
 
 <span class="cm">// Physics: no duration, no easing — a spring settles when it settles.</span>
 <span class="kw">const</span> pop = <span class="fn">scene</span>().<span class="fn">stagger</span>(<span class="str">'.pop-bubble'</span>, (el, i) =&gt; ({
@@ -1799,10 +1804,26 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
        script. The UMD inlines animation-engine, so loading it separately would
        give this page two copies of the ticker singleton and two rAF loops —
        `ticker.timeScale` would then slow the physics scenes and leave the
-       timelines untouched. One bundle, one ticker. -->
+       timelines untouched. One bundle, one ticker.
+
+       physics-engine is the opposite case, so it *does* get its own script
+       tag: animation-engine 0.2.0 stopped bundling the spring, and
+       physics-engine is dependency-free with no singleton or shared state —
+       nothing to duplicate, no loop to run twice. It's vendored into
+       demo/vendor/ because GitHub Pages serves this folder as static files and
+       can't reach node_modules. It publishes the `PhysicsEngine` global, which
+       we hand to TimelineEngine's `registerPhysics` below. -->
+  <script src="./vendor/physics-engine.min.js"></script>
   <script src="../dist/timeline-engine.min.js"></script>
   <script type="module">
-    const { timeline, scrollDriver, viewTrigger, scene, ticker, rand } = TimelineEngine;
+    const { timeline, scrollDriver, viewTrigger, scene, ticker, rand, registerPhysics } =
+      TimelineEngine;
+
+    // Springs are opt-in as of animation-engine 0.2.0 — a `{ physics }` scene
+    // step throws until an implementation is registered. The vendored script
+    // above provides `window.PhysicsEngine`; registering it through
+    // TimelineEngine reaches the same engine copy the scenes below use.
+    registerPhysics(PhysicsEngine);
 
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));

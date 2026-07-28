@@ -1,6 +1,6 @@
 {
   "name": "@magic-spells/timeline-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scrubable animation timeline — keyframe clips at offset start times, driven by the clock, a scrub position, or scroll, for the magic-spells ecosystem",
   "type": "module",
   "main": "./dist/timeline-engine.esm.js",
@@ -36,11 +36,12 @@
     "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
-    "@magic-spells/animation-engine": "^0.1.0",
+    "@magic-spells/animation-engine": "^0.2.0",
     "@magic-spells/event-emitter": "^0.1.0",
     "@magic-spells/frame-engine": "^1.0.1"
   },
   "devDependencies": {
+    "@magic-spells/physics-engine": "^1.0.0",
     "vite": "^8.1.4"
   }
 }
