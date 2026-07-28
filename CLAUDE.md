@@ -101,8 +101,36 @@ fires, which is what the README's own trigger idiom used to do.
 top hits the viewport's bottom). The px range is computed in `refresh()` (re-run on resize,
 rAF-throttled); scroll listeners are passive and rAF-throttled. `smoothing` (ms
 time-constant) lerps the playhead toward the scroll target via a ticker subscription
-instead of locking to it — `refresh(force)` snaps such a driver rather than easing, or it
-would silently do nothing when mapped progress hasn't changed. Vertical axis only.
+instead of locking to it — a *forcing* `refresh()` snaps such a driver rather than easing,
+or it would silently do nothing when mapped progress hasn't changed. Vertical axis only.
+
+**Mobile chrome must not move the range.** Two halves, both aimed at the same jerk:
+
+- `src/viewport-metrics.js` measures a hidden `100svh` probe instead of `innerHeight`, so
+  the URL bar animating away doesn't change what a range resolves to. `_viewportHeight()`
+  routes to it on `typeof window !== 'undefined' && s === window` — **identity, not
+  duck-typing**: the whole test suite drives window-*shaped* fakes with their own
+  `innerHeight`, and a `typeof s.innerHeight === 'number'` check would hand every one of
+  them the real viewport instead. The module reads `document`/`window`/`CSS` only inside
+  `init()`/`height()` (tests import it in Node), and it is internal — not exported from
+  `src/timeline-engine.js`.
+- `refresh()` forces the re-seek **only when the range moved** by more than
+  `RANGE_EPSILON` (0.5px). The epsilon is not decoration: chrome animation produces
+  sub-pixel jitter that would otherwise "move" the range on every one of the dozens of
+  resize events it fires, and each force snaps a smoothed driver mid-ease. This is a
+  deliberate behavior change — `refresh()` on an unchanged range is now a no-op — and the
+  test `refresh snaps a smoothed driver when the range actually moved` was rewritten to
+  assert exactly that (it used to assert the opposite). Don't "fix" it back; move
+  `trigger.top` if you need a refresh to do something.
+
+**Off-range drivers skip the frame.** `_schedule()` early-outs when recomputed progress
+equals the last one, the zone is unchanged, and progress is pinned at 0 or 1 — so a driver
+whose range is far off-screen costs nothing per scroll event. Safe only because progress is
+a pure function of scroll position against the cached px range. IntersectionObserver was
+considered for this and rejected: **IO delivers no callback for a programmatic jump across
+the whole range**, so an IO-gated skip would silently swallow `onEnter`/`onLeave` pairs the
+zone logic is required to fire — and what it would save is arithmetic, not layout reads. An
+opt-in IO variant may land later; it can only ever *widen* this guard, never replace it.
 
 The constructor adopts the current scroll position so a mid-scroll reload paints
 correctly, and that bootstrap seek is **unconditionally silent** regardless of `silent` —
@@ -120,6 +148,7 @@ clip state that can't serialize (functions, element refs) without a string form.
 - `src/timeline.js` — Timeline class: clip placement, getFrames/seek, playback, JSON
 - `src/clip.js` — clip construction: target resolution, sparse fill, FrameEngine, stagger
 - `src/scroll-driver.js` — scroll → progress mapping, range parsing, smoothing
+- `src/viewport-metrics.js` — stable `100svh` viewport height (internal, window only)
 - `src/view-trigger.js` — IntersectionObserver enter/leave triggering
 - `src/timeline-engine.js` — entry point / public exports
 - `src/timeline-engine.d.ts` — public TypeScript declarations (keep in sync)

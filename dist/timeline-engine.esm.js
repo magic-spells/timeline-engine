@@ -302,7 +302,31 @@ var b = class t extends e {
 			t && t();
 		}
 	}
-}, x = 5e-4, S = {
+}, x = "position: fixed; top: 0; left: 0; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; z-index: -1;";
+function S() {
+	return globalThis.visualViewport?.height || globalThis.innerHeight || 0;
+}
+var C = {
+	probe: null,
+	container: null,
+	init() {
+		if (this.probe || typeof document > "u" || !document.documentElement) return;
+		let e = globalThis.CSS;
+		if (typeof e?.supports != "function" || !e.supports("height: 100svh")) return;
+		let t = document.createElement("div"), n = document.createElement("div");
+		t.setAttribute("aria-hidden", "true"), t.style.cssText = x, n.style.height = "100svh", t.appendChild(n), document.documentElement.appendChild(t), this.container = t, this.probe = n;
+	},
+	height() {
+		if (this.init(), this.probe) {
+			let e = this.probe.getBoundingClientRect().height;
+			if (e) return e;
+		}
+		return S();
+	},
+	_reset() {
+		typeof this.container?.remove == "function" && this.container.remove(), this.container = null, this.probe = null;
+	}
+}, w = 5e-4, T = .5, E = {
 	top: 0,
 	start: 0,
 	center: .5,
@@ -310,29 +334,29 @@ var b = class t extends e {
 	bottom: 1,
 	end: 1
 };
-function C(e) {
+function D(e) {
 	return e < 0 ? 0 : e > 1 ? 1 : e;
 }
-function w() {
+function O() {
 	return typeof requestAnimationFrame == "function";
 }
-function T(e, t) {
+function k(e, t) {
 	if (typeof e == "function") try {
 		e(t);
 	} catch (e) {
 		console.error(e);
 	}
 }
-function E(e, t) {
+function A(e, t) {
 	let n = e.toLowerCase();
-	if (n in S) return S[n];
+	if (n in E) return E[n];
 	if (n.endsWith("%")) {
 		let e = parseFloat(n);
 		if (!Number.isNaN(e)) return e / 100;
 	}
 	throw Error(`ScrollDriver: unrecognised scroll point "${e}" in "${t}" — use top | center | bottom or a percentage like "25%".`);
 }
-function D(e) {
+function j(e) {
 	if (typeof e == "function") return {
 		kind: "fn",
 		fn: e
@@ -343,7 +367,7 @@ function D(e) {
 	};
 	if (typeof e != "string") throw Error(`ScrollDriver: invalid scroll point ${String(e)}.`);
 	let t = e.trim().split(/\s+/);
-	if (t.length === 1 && !t[0].endsWith("%") && !(t[0].toLowerCase() in S)) {
+	if (t.length === 1 && !t[0].endsWith("%") && !(t[0].toLowerCase() in E)) {
 		let e = parseFloat(t[0]);
 		if (!Number.isNaN(e)) return {
 			kind: "px",
@@ -352,19 +376,23 @@ function D(e) {
 	}
 	return {
 		kind: "align",
-		trigger: E(t[0], e),
-		viewport: E(t[1] === void 0 ? "top" : t[1], e)
+		trigger: A(t[0], e),
+		viewport: A(t[1] === void 0 ? "top" : t[1], e)
 	};
 }
-var O = class {
+var M = class {
 	constructor(e, t = {}) {
-		this._timeline = e, this._options = t, this._scroller = t.scroller ?? (typeof window < "u" ? window : null), this._trigger = A(t.trigger), this._start = D(t.start ?? "top bottom"), this._end = D(t.end ?? "bottom top"), this._smoothing = t.smoothing ?? 0, this._silent = t.silent ?? !1, this._startPx = 0, this._endPx = 0, this._progress = 0, this._zone = 0, this._current = 0, this._target = 0, this._unsubscribe = null, this._rafId = null, this._resizeRafId = null, this._destroyed = !1, this._onScroll = () => this._schedule(), this._onResize = () => this._scheduleRefresh(), this._onTick = (e) => this._smooth(e), this._recompute(), this._progress = this._computeProgress(), this._zone = k(this._progress), this._current = this._progress, this._target = this._progress, this._seek(this._progress, !0), this._attach();
+		this._timeline = e, this._options = t, this._scroller = t.scroller ?? (typeof window < "u" ? window : null), this._trigger = P(t.trigger), this._start = j(t.start ?? "top bottom"), this._end = j(t.end ?? "bottom top"), this._smoothing = t.smoothing ?? 0, this._silent = t.silent ?? !1, this._startPx = 0, this._endPx = 0, this._progress = 0, this._zone = 0, this._current = 0, this._target = 0, this._unsubscribe = null, this._rafId = null, this._resizeRafId = null, this._destroyed = !1, this._onScroll = () => this._schedule(), this._onResize = () => this._scheduleRefresh(), this._onTick = (e) => this._smooth(e), this._recompute(), this._progress = this._computeProgress(), this._zone = N(this._progress), this._current = this._progress, this._target = this._progress, this._seek(this._progress, !0), this._attach();
 	}
 	get progress() {
 		return this._progress;
 	}
 	refresh() {
-		this._destroyed || (this._recompute(), this._apply(!0));
+		if (this._destroyed) return;
+		let e = this._startPx, t = this._endPx;
+		this._recompute();
+		let n = Math.abs(this._startPx - e) > T || Math.abs(this._endPx - t) > T;
+		this._apply(n);
 	}
 	destroy() {
 		this._destroyed || (this._destroyed = !0, this._detach(), this._stopSmoothing(), typeof cancelAnimationFrame == "function" && (this._rafId !== null && cancelAnimationFrame(this._rafId), this._resizeRafId !== null && cancelAnimationFrame(this._resizeRafId)), this._rafId = null, this._resizeRafId = null);
@@ -375,7 +403,7 @@ var O = class {
 	}
 	_viewportHeight() {
 		let e = this._scroller;
-		return e ? typeof e.innerHeight == "number" ? e.innerHeight : typeof e.clientHeight == "number" ? e.clientHeight : 0 : 0;
+		return e ? typeof window < "u" && e === window ? C.height() : typeof e.innerHeight == "number" ? e.innerHeight : typeof e.clientHeight == "number" ? e.clientHeight : 0 : 0;
 	}
 	get _isWindowScroller() {
 		let e = this._scroller;
@@ -412,11 +440,13 @@ var O = class {
 	}
 	_computeProgress() {
 		let e = this._endPx - this._startPx;
-		return e === 0 ? +(this._scrollPos() >= this._startPx) : C((this._scrollPos() - this._startPx) / e);
+		return e === 0 ? +(this._scrollPos() >= this._startPx) : D((this._scrollPos() - this._startPx) / e);
 	}
 	_schedule() {
-		if (!this._destroyed) {
-			if (!w()) {
+		if (this._destroyed) return;
+		let e = this._computeProgress();
+		if (!(e === this._progress && N(e) === this._zone && (e === 0 || e === 1))) {
+			if (!O()) {
 				this._apply(!1);
 				return;
 			}
@@ -427,7 +457,7 @@ var O = class {
 	}
 	_scheduleRefresh() {
 		if (!this._destroyed) {
-			if (!w()) {
+			if (!O()) {
 				this.refresh();
 				return;
 			}
@@ -439,24 +469,24 @@ var O = class {
 	_apply(e) {
 		let t = this._computeProgress(), n = t !== this._progress;
 		this._progress = t;
-		let r = k(t);
+		let r = N(t);
 		if (r !== this._zone) {
 			let e = this._zone;
 			this._zone = r, this._fireZone(e, r);
 		}
-		if (n && T(this._options.onProgress, t), this._smoothing > 0) {
+		if (n && k(this._options.onProgress, t), this._smoothing > 0) {
 			if (this._target = t, e) {
 				this._current = t, this._stopSmoothing(), this._seek(t);
 				return;
 			}
-			Math.abs(this._target - this._current) > x && this._startSmoothing();
+			Math.abs(this._target - this._current) > w && this._startSmoothing();
 			return;
 		}
 		(n || e) && (this._current = t, this._seek(t));
 	}
 	_fireZone(e, t) {
 		let n = this._options;
-		t > e ? (e === -1 && T(n.onEnter), t === 1 && T(n.onLeave)) : (e === 1 && T(n.onEnterBack), t === -1 && T(n.onLeaveBack));
+		t > e ? (e === -1 && k(n.onEnter), t === 1 && k(n.onLeave)) : (e === 1 && k(n.onEnterBack), t === -1 && k(n.onLeaveBack));
 	}
 	_seek(e, t = !1) {
 		let n = this._timeline;
@@ -478,7 +508,7 @@ var O = class {
 	_smooth(e) {
 		try {
 			let t = this._target - this._current;
-			if (Math.abs(t) <= x) {
+			if (Math.abs(t) <= w) {
 				this._current !== this._target && (this._current = this._target, this._seek(this._current)), this._stopSmoothing();
 				return;
 			}
@@ -500,15 +530,15 @@ var O = class {
 		t && typeof t.removeEventListener == "function" && t.removeEventListener("resize", this._onResize), this._resizeTarget = null;
 	}
 };
-function k(e) {
+function N(e) {
 	return e >= 1 ? 1 : e <= 0 ? -1 : 0;
 }
-function A(e) {
+function P(e) {
 	return e == null ? null : typeof e == "string" ? typeof document < "u" && document.querySelector ? document.querySelector(e) : null : e;
 }
 //#endregion
 //#region src/view-trigger.js
-function j(e, t = {}) {
+function F(e, t = {}) {
 	let { enter: n, leave: r, once: i = !1, threshold: a = 0, rootMargin: o = "0px" } = t, s = globalThis.IntersectionObserver;
 	if (typeof s != "function") throw Error("viewTrigger: IntersectionObserver is not available in this environment.");
 	let l = c(e), u = /* @__PURE__ */ new Set(), d = /* @__PURE__ */ new Set(), f = l.length, p = !1, m = new s((e) => {
@@ -532,14 +562,14 @@ function j(e, t = {}) {
 }
 //#endregion
 //#region src/timeline-engine.js
-function M(e) {
+function I(e) {
 	return new b(e);
 }
-function N(e) {
+function L(e) {
 	return b.fromJSON(e);
 }
-function P(e, t) {
-	return new O(e, t);
+function R(e, t) {
+	return new M(e, t);
 }
 //#endregion
-export { O as ScrollDriver, b as Timeline, N as fromJSON, n as rand, i as scene, P as scrollDriver, a as ticker, M as timeline, j as viewTrigger };
+export { M as ScrollDriver, b as Timeline, L as fromJSON, n as rand, i as scene, R as scrollDriver, a as ticker, I as timeline, F as viewTrigger };

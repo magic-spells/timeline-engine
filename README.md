@@ -134,6 +134,13 @@ Notes worth knowing before you wire one up:
 - Attach `'update'` listeners to the timeline **before** constructing the driver, or the
   bootstrap frame lands before anything is listening.
 
+**Mobile viewports are stable, with no configuration.** When the scroller is the window,
+the driver measures the viewport with a hidden `100svh` probe rather than `innerHeight`, so
+a URL bar sliding in and out doesn't move your scroll range under the user mid-scroll. The
+resize events that animation fires still recompute the range — they just find the same one,
+and a refresh that finds an unchanged range re-seeks nothing, which is what keeps a
+smoothed playhead from being snapped on every frame of that animation.
+
 ## Triggering, and the physics question
 
 Scrubbed clips are easing/cubic-bezier only — a physics spring has no closed-form
@@ -220,7 +227,8 @@ were added as selector strings (built for a future visual timeline editor).
 | `onEnter` / `onLeave` / `onEnterBack` / `onLeaveBack` / `onProgress` | — | Range callbacks |
 
 Instance: `.progress`, `.refresh()`, `.destroy()`. Call `.refresh()` after any layout
-change; it re-measures the px range and re-asserts the playhead. Vertical axis only.
+change; it re-measures the px range and re-asserts the playhead — but only if the range
+actually moved. Vertical axis only.
 
 ### `viewTrigger(target, { enter, leave, once, threshold, rootMargin })` → `{ destroy() }`
 

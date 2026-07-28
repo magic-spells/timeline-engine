@@ -3,8 +3,40 @@ import assert from 'node:assert/strict';
 import { ticker } from '@magic-spells/animation-engine';
 
 import { ScrollDriver } from '../src/scroll-driver.js';
+import { viewportMetrics } from '../src/viewport-metrics.js';
 
 /* ------------------------------------------------------------------ fakes */
+
+/**
+ * Install a global for one test and restore it afterwards. Anything left
+ * behind here — a stray `window` above all — changes which branch every later
+ * test takes.
+ * @param {object} t - Test context.
+ * @param {string} name
+ * @param {*} value
+ */
+function stubGlobal(t, name, value) {
+  const had = name in globalThis;
+  const original = globalThis[name];
+  globalThis[name] = value;
+  t.after(() => {
+    if (had) globalThis[name] = original;
+    else delete globalThis[name];
+  });
+}
+
+/**
+ * Stub requestAnimationFrame and hand back the queue of pending callbacks.
+ * The suite normally runs without rAF (that is what makes it synchronous);
+ * stub one in to observe scheduling itself.
+ * @param {object} t - Test context.
+ * @returns {Array<() => void>}
+ */
+function captureFrames(t) {
+  const frames = [];
+  stubGlobal(t, 'requestAnimationFrame', (fn) => frames.push(fn));
+  return frames;
+}
 
 /**
  * A window-like scroll container with capturable listeners.
@@ -329,6 +361,40 @@ test('resize triggers a refresh', () => {
   driver.destroy();
 });
 
+test('a resize that leaves the range alone is a no-op', () => {
+  const { scroller, timeline, driver } = fixture();
+
+  scroller.scrollTo(800);
+  const seeks = timeline.seeks.length;
+
+  // Mobile chrome sliding away fires resize without moving anything the range
+  // is computed from; re-asserting the playhead there is what jerks it.
+  scroller.dispatch('resize');
+  scroller.dispatch('resize');
+
+  assert.equal(driver._startPx, 200);
+  assert.equal(driver.progress, 0.5);
+  assert.equal(timeline.seeks.length, seeks);
+
+  driver.destroy();
+});
+
+test('the range must move more than half a pixel to force a re-seek', () => {
+  const { trigger, timeline, driver } = fixture();
+  const seeks = timeline.seeks.length;
+
+  trigger.top = 1000.25; // sub-pixel jitter, which a chrome animation produces
+  driver.refresh();
+  assert.equal(driver._startPx, 200.25, 'the range is recomputed either way');
+  assert.equal(timeline.seeks.length, seeks, 'nothing is re-asserted for it');
+
+  trigger.top = 1002.25;
+  driver.refresh();
+  assert.equal(timeline.seeks.length, seeks + 1);
+
+  driver.destroy();
+});
+
 test('resize refreshes once per frame, not once per event', (t) => {
   // The suite normally runs without rAF (that is what makes it synchronous and
   // deterministic); stub one in to observe the throttle itself.
@@ -386,6 +452,86 @@ test('destroy removes every listener and stops updating', () => {
   assert.equal(timeline.last().time, 0);
 });
 
+/* ------------------------------------------------------- stable viewport */
+
+test('the real window measures a stable viewport height, fakes do not', (t) => {
+  const fakeWindow = makeScroller(800);
+  stubGlobal(t, 'window', fakeWindow);
+  // No document here, so the 100svh probe cannot exist and viewportMetrics
+  // falls back to visualViewport — a different number from innerHeight, which
+  // is exactly what proves which branch ran.
+  stubGlobal(t, 'visualViewport', { height: 600 });
+  t.after(() => viewportMetrics._reset());
+
+  const trigger = makeTrigger(fakeWindow, 1000, 400);
+  const driver = new ScrollDriver(makeTimeline(1000), { trigger });
+
+  assert.equal(driver._startPx, 400, '1000 - 600, not 1000 - 800');
+  assert.equal(driver._endPx, 1400);
+  driver.destroy();
+
+  // The branch is an identity check, not duck-typing: a window-shaped fake
+  // keeps reporting its own innerHeight even while a real window exists.
+  const fake = fixture();
+  assert.equal(fake.driver._startPx, 200);
+  fake.driver.destroy();
+});
+
+/* ---------------------------------------------------------- off-range gate */
+
+test('scrolling outside the range schedules no frames', (t) => {
+  const frames = captureFrames(t);
+  const { scroller, timeline, driver } = fixture();
+  const seeks = timeline.seeks.length;
+
+  // Range is 200 → 1400; everything below 200 maps to a pinned 0.
+  scroller.scrollTo(50);
+  scroller.scrollTo(120);
+  scroller.scrollTo(199);
+  assert.equal(frames.length, 0, 'pinned progress costs nothing per event');
+  assert.equal(timeline.seeks.length, seeks);
+
+  // Entering the range falls through — once, the existing throttle covers the
+  // rest of the burst.
+  scroller.scrollTo(800);
+  scroller.scrollTo(1100);
+  assert.equal(frames.length, 1);
+  frames[0]();
+  assert.equal(driver.progress, 0.75);
+
+  scroller.scrollTo(4000);
+  assert.equal(frames.length, 2);
+  frames[1]();
+  assert.equal(driver.progress, 1);
+
+  // Past the end it goes quiet again.
+  const applied = timeline.seeks.length;
+  scroller.scrollTo(9000);
+  scroller.scrollTo(12000);
+  assert.equal(frames.length, 2);
+  assert.equal(timeline.seeks.length, applied);
+
+  driver.destroy();
+});
+
+test('a jump across the whole range still fires both edges', (t) => {
+  const frames = captureFrames(t);
+  const events = [];
+  const { scroller, driver } = fixture({
+    onEnter: () => events.push('enter'),
+    onLeave: () => events.push('leave'),
+  });
+
+  // The skip is progress-based, not visibility-based, on purpose: an
+  // IntersectionObserver gate gets no callback for a jump like this at all.
+  scroller.scrollTo(4000);
+  assert.equal(frames.length, 1, 'progress changed, so the frame is scheduled');
+  frames[0]();
+  assert.deepEqual(events, ['enter', 'leave']);
+
+  driver.destroy();
+});
+
 /* ------------------------------------------------------------- smoothing */
 
 test('smoothing lerps toward the scroll target and settles', () => {
@@ -417,22 +563,23 @@ test('smoothing lerps toward the scroll target and settles', () => {
   driver.destroy();
 });
 
-test('refresh re-seeks a smoothed driver and snaps its playhead', () => {
-  const { scroller, timeline, driver } = fixture({ smoothing: 100 });
+test('refresh snaps a smoothed driver when the range actually moved', () => {
+  const { scroller, trigger, timeline, driver } = fixture({ smoothing: 100 });
 
-  // Mapped progress is unchanged, but refresh() still has to re-assert it: the
-  // layout it was computed from moved, which is the only reason `force` exists.
+  // A refresh that finds the same range does nothing at all. Deliberate: this
+  // test used to assert the opposite, and mobile chrome resizes fire
+  // continuously — re-asserting there snaps every smoothed driver on the page.
   const before = timeline.seeks.length;
   driver.refresh();
-  assert.equal(timeline.seeks.length, before + 1);
-  assert.equal(timeline.last().time, 0);
+  assert.equal(timeline.seeks.length, before);
 
-  // Mid-flight, refresh snaps rather than keeping on easing from a position
-  // the stale range produced.
+  // Mid-flight, a refresh whose range *did* move snaps rather than keeping on
+  // easing from a position the stale range produced.
   scroller.scrollTo(1400);
   ticker.tick(16);
   assert.ok(driver._current > 0 && driver._current < 1, 'mid-ease before refresh');
 
+  trigger.top = 900; // start 100, end 1300 — scroll 1400 is still past the end
   driver.refresh();
   assert.equal(driver._current, 1);
   assert.equal(driver._target, 1);
@@ -443,6 +590,23 @@ test('refresh re-seeks a smoothed driver and snaps its playhead', () => {
   ticker.tick(16);
   ticker.tick(16);
   assert.equal(timeline.seeks.length, settled);
+
+  driver.destroy();
+});
+
+test('a chrome-driven resize does not snap a mid-ease smoothed driver', () => {
+  const { scroller, driver } = fixture({ smoothing: 100 });
+
+  scroller.scrollTo(1400);
+  ticker.tick(16);
+  const mid = driver._current;
+  assert.ok(mid > 0 && mid < 1, 'mid-ease');
+
+  scroller.dispatch('resize'); // same viewport height → same range
+  assert.equal(driver._current, mid, 'the ease survives the resize storm');
+
+  ticker.tick(16);
+  assert.ok(driver._current > mid, 'and keeps going');
 
   driver.destroy();
 });
