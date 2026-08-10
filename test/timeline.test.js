@@ -706,6 +706,50 @@ test('reverse looping wraps from 0 back to duration', async (t) => {
   await done;
 });
 
+// A negative ticker delta is a clock artifact (an idle/occluded page's first
+// rAF timestamp can predate the shared ticker's subscribe-time seed), never
+// reverse playback — direction is expressed only through timeScale. Before the
+// guard, _advance read -5ms from time 0 as reverse, the max(1, …) boundary
+// converted it into a whole "completed" iteration, and playback settled on
+// frame one.
+test('a negative ticker delta is discarded, not read as reverse playback', async () => {
+  let completes = 0;
+  const tl = new Timeline();
+  tl.tween(el(), { 0: { opacity: 0 }, 100: { opacity: 1 } }, { duration: 1000, easing: 'linear' });
+  tl.on('complete', () => (completes += 1));
+
+  const done = tl.play();
+  ticker.tick(-5); // clock artifact on the first frame
+  assert.equal(tl.playing, true);
+  assert.equal(tl.time(), 0);
+  assert.equal(completes, 0);
+
+  ticker.tick(1000); // normal frames still complete playback
+  await done;
+  assert.equal(tl.time(), 1000);
+  assert.equal(completes, 1);
+});
+
+test('a negative delta during reverse playback does not step the playhead forward', async () => {
+  const tl = new Timeline();
+  tl.tween(el(), { 0: { opacity: 0 }, 100: { opacity: 1 } }, { duration: 1000 });
+  tl.timeScale(-1);
+
+  const done = tl.play();
+  assert.equal(tl.time(), 1000);
+
+  ticker.tick(300); // genuine reverse motion
+  assert.equal(tl.time(), 700);
+
+  ticker.tick(-5); // glitch × timeScale(-1) multiplies positive without the guard
+  assert.equal(tl.time(), 700);
+
+  ticker.tick(800);
+  await done;
+  assert.equal(tl.time(), 0);
+  assert.equal(tl.playing, false);
+});
+
 test('pause inside a call stops completion and freezes the playhead', async () => {
   let completes = 0;
   const tl = new Timeline();

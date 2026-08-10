@@ -562,6 +562,11 @@ export default class Timeline extends EventEmitter {
    * @param {number} delta
    */
   _advance(delta) {
+    // Negative deltas are clock artifacts (an idle/occluded page's first rAF
+    // timestamp can predate the ticker's subscribe-time seed) — discard them.
+    // Reverse playback is expressed only through timeScale, never through the
+    // sign of the tick delta.
+    if (delta < 0) return;
     const total = this.duration;
     const step = delta * this._timeScale;
     if (step === 0) return;
