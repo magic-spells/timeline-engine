@@ -78,7 +78,6 @@
       justify-content: center;
       padding: 5.5rem 2rem 3rem;
       text-align: center;
-      min-height: 72vh;
     }
 
     .hero::before {
@@ -186,8 +185,26 @@
        line, so the pill keeps its width and nothing re-centres mid-feedback. */
     .install-item.copied .install-value { color: var(--teal); border-color: var(--teal); }
     .install-item.copied .install-label { color: var(--teal); }
-    .install-size { font-family: 'Courier New', monospace; font-size: 0.9375rem; color: var(--teal); padding: 0.5em 0; }
+    /* ---- Size breakdown ----
+       Two numbers, because "how big is it" has two honest answers: the npm path
+       externalizes the @magic-spells deps (5.8 kB is just this package), the
+       script-tag path inlines them (14.6 kB is the whole stack). Quoting only one
+       either undersells the download or oversells the library. Numbers are
+       measured by hand — see CLAUDE.md; re-run gzip and update both here and in
+       the README when the bundle moves. Grid so the figures align on their right
+       edge and the eye can compare them without reading the labels. */
     .install-item-size { flex-basis: 100%; }
+    .size-list {
+      display: grid; grid-template-columns: auto auto;
+      column-gap: 0.9rem; row-gap: 0.4rem;
+      align-items: baseline; padding: 0.3em 0;
+    }
+    .size-num {
+      font-family: 'Courier New', monospace; font-size: 0.9375rem;
+      color: var(--teal); text-align: right; white-space: nowrap;
+    }
+    .size-what { font-size: 0.875rem; color: var(--text-dim); }
+    .size-what i { font-style: normal; color: var(--text-dim); opacity: 0.6; }
 
     /* ---- Dependency pills ----
        Last row of the install banner, under the size: label on top, then the
@@ -1073,6 +1090,9 @@
       .hero { padding: 4.5rem 1.1rem 3rem; }
       .hero-badge { padding: 0.45em 0.9em; letter-spacing: 0.06em; }
       .dep-badge { padding: 0.5em 1em; }
+      /* The format note wraps mid-parenthetical at phone widths; give it its own
+         line under the description instead of letting it break wherever. */
+      .size-what i { display: block; }
       .scrub-stage { height: 54vh; min-height: 280px; }
       .scrub-track.pinned { height: 170vh; }
       .split-note { grid-template-columns: 1fr; }
@@ -1145,7 +1165,12 @@
     </div>
     <div class="install-item install-item-size">
       <span class="install-label">Size (gzip)</span>
-      <span class="install-size">5.8 kB esm · 14.6 kB umd</span>
+      <div class="size-list">
+        <span class="size-num">5.8 kB</span>
+        <span class="size-what">timeline-engine alone <i>(esm, deps external)</i></span>
+        <span class="size-num">14.6 kB</span>
+        <span class="size-what">with every dependency <i>(umd, deps inlined)</i></span>
+      </div>
     </div>
     <div class="install-item install-item-deps">
       <span class="install-label">Uses</span>
