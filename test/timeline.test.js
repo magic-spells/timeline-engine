@@ -269,6 +269,32 @@ test('merging is per property: an earlier clip keeps properties the later one om
   assert.deepEqual(tl.getFrames(500)[0].styles, { width: '50px', opacity: '0.5' });
 });
 
+test("a gap between clips holds the finished clip's end frame, not a later clip's first frame", () => {
+  const target = el();
+  const tl = new Timeline();
+  // Three clips on one lane with gaps: 0-100, 300-400, 600-700.
+  tl.tween(target, { 0: { opacity: 0 }, 100: { opacity: 0.3 } }, { at: 0, duration: 100, easing: 'linear' });
+  tl.tween(target, { 0: { opacity: 0.3 }, 100: { opacity: 0.6 } }, { at: 300, duration: 100, easing: 'linear' });
+  tl.tween(target, { 0: { opacity: 0.9 }, 100: { opacity: 1 } }, { at: 600, duration: 100, easing: 'linear' });
+
+  // In the 100-300 gap the first clip's forward fill holds; the last clip's
+  // backward fill (0.9) must not bleed in front of the playhead.
+  assert.deepEqual(tl.getFrames(200)[0].styles, { opacity: '0.3' });
+  // In the 400-600 gap the second clip has finished and holds.
+  assert.deepEqual(tl.getFrames(500)[0].styles, { opacity: '0.6' });
+});
+
+test("before the first clip, the nearest upcoming clip's backward fill wins", () => {
+  const target = el();
+  const tl = new Timeline();
+  tl.tween(target, { 0: { opacity: 0.2 }, 100: { opacity: 0.5 } }, { at: 100, duration: 100, easing: 'linear' });
+  tl.tween(target, { 0: { opacity: 0.9 }, 100: { opacity: 1 } }, { at: 400, duration: 100, easing: 'linear' });
+
+  // The playhead hasn't reached either clip: the first one to start supplies
+  // the resting frame, not the farthest-future one.
+  assert.deepEqual(tl.getFrames(0)[0].styles, { opacity: '0.2' });
+});
+
 // ---- seek ----
 
 test('seek applies styles and moves the playhead', () => {

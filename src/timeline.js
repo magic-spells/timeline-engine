@@ -208,9 +208,11 @@ export default class Timeline extends EventEmitter {
 
   /**
    * The styles every target should have at `time`. Pure: no DOM writes, no
-   * callbacks, no playhead movement. One entry per element; clips merge in
-   * ascending `at` order (insertion order breaks ties). Fill contributions are
-   * merged first so an active clip always wins over an out-of-window hold.
+   * callbacks, no playhead movement. One entry per element. Precedence is
+   * temporal, not list order: a not-yet-started clip contributes its backward
+   * fill only until any earlier clip has run — in a gap between two clips the
+   * finished clip's forward fill holds, never the upcoming clip's first frame —
+   * and an active window is always authoritative.
    * @param {number} time
    * @returns {{ element: object, styles: Object<string, string> }[]}
    */
@@ -218,16 +220,31 @@ export default class Timeline extends EventEmitter {
     const merged = new Map();
     const clips = this._sortedClips();
 
-    // Fill is the fallback layer. Creating every entry here also preserves an
-    // empty style object for clips whose fill contributes nothing.
-    for (const clip of clips) {
+    // Backward fills, farthest-future first, so the next clip to start is the
+    // one whose first frame wins among clips the playhead hasn't reached.
+    // Creating every entry here also preserves an empty style object for clips
+    // whose fill contributes nothing.
+    for (let c = clips.length - 1; c >= 0; c -= 1) {
+      const clip = clips[c];
       clip.elements.forEach((el, i) => {
         let styles = merged.get(el);
         if (styles === undefined) {
           styles = {};
           merged.set(el, styles);
         }
-        if (clipPhaseAt(clip, i, time) === 0) return;
+        if (clipPhaseAt(clip, i, time) !== -1) return;
+        const contribution = clipStylesAt(clip, i, time);
+        if (contribution) Object.assign(styles, contribution);
+      });
+    }
+
+    // Forward fills in ascending `at` order: the most recently finished clip
+    // wins, and any finished clip beats every backward fill — the playhead has
+    // actually been through it.
+    for (const clip of clips) {
+      clip.elements.forEach((el, i) => {
+        if (clipPhaseAt(clip, i, time) !== 1) return;
+        const styles = merged.get(el);
         const contribution = clipStylesAt(clip, i, time);
         if (contribution) Object.assign(styles, contribution);
       });
