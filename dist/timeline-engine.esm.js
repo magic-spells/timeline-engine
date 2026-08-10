@@ -134,10 +134,18 @@ var x = class t extends e {
 	}
 	getFrames(e) {
 		let t = /* @__PURE__ */ new Map(), n = this._sortedClips();
+		for (let r = n.length - 1; r >= 0; --r) {
+			let i = n[r];
+			i.elements.forEach((n, r) => {
+				let a = t.get(n);
+				if (a === void 0 && (a = {}, t.set(n, a)), g(i, r, e) !== -1) return;
+				let o = _(i, r, e);
+				o && Object.assign(a, o);
+			});
+		}
 		for (let r of n) r.elements.forEach((n, i) => {
-			let a = t.get(n);
-			if (a === void 0 && (a = {}, t.set(n, a)), g(r, i, e) === 0) return;
-			let o = _(r, i, e);
+			if (g(r, i, e) !== 1) return;
+			let a = t.get(n), o = _(r, i, e);
 			o && Object.assign(a, o);
 		});
 		for (let r of n) r.elements.forEach((n, i) => {
