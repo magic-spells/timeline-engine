@@ -274,6 +274,7 @@ var x = class t extends e {
 		}
 	}
 	_advance(e) {
+		if (e < 0) return;
 		let t = this.duration, n = e * this._timeScale;
 		if (n === 0) return;
 		let r = n < 0, i = this._time + n, a = r ? 0 : t;

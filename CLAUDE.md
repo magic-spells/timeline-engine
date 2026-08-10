@@ -74,7 +74,10 @@ the stagger stable.
 **Timed playback rides animation-engine's shared ticker** — one rAF loop across the whole
 ecosystem, `timeScale` composes, and in Node tests drive time manually with
 `ticker.tick(ms)`. `play()` returns a promise; `loop` wraps at the end (timed playback
-only — scroll driving ignores loop). `destroy()` releases the subscription.
+only — scroll driving ignores loop). `destroy()` releases the subscription. `_advance`
+discards negative deltas: they're clock artifacts (a first rAF timestamp predating the
+ticker's seed), and reading them as reverse playback once killed play() on frame one —
+direction comes only from `timeScale`.
 
 "One rAF loop" is only true if the page has **one copy** of animation-engine. The UMD
 build inlines it (ticker singleton included), so a page loading both that bundle and a
