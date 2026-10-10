@@ -26,6 +26,15 @@
       --cool: #86b5e8;
       --amber: #d9a441;
       --rose: #e08a6f;
+      /* 04 dominoes + 05 bomb */
+      --lacquer: #0d1a1e;
+      --lacquer-hi: #1d3238;
+      --iron: #18212a;
+      --iron-hi: #475766;
+      --rope: #d2a66a;
+      --rope-dark: #6b4526;
+      --spark: #ffe7b0;
+      --smoke: rgba(194, 204, 198, 0.42);
       /* Text ramp. Every step clears 7:1 on --bg-deep — the old ramp bottomed
          out at 5.2:1 for --text-dim, which carried most of the small labels and
          all of the section prose, and it read as unfinished grey on a dark page. */
@@ -250,26 +259,11 @@
     }
     .demo-section:hover { border-color: var(--border-accent); background: var(--bg-card-hover); }
 
-    /* Tags sit on their own row above the heading — they label the driver
-       ("who owns the playhead") for the section, so they read as a kicker
-       rather than as trailing metadata on the title's baseline. */
-    .demo-header {
-      display: flex; flex-direction: column; align-items: flex-start;
-      gap: 0.75rem; margin-bottom: 0.4rem;
-    }
-    .demo-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .demo-header { margin-bottom: 0.55rem; }
     .demo-section h2 {
       font-family: var(--font-display); font-weight: 400;
-      font-size: 1.85rem; color: var(--cream); letter-spacing: -0.01em;
+      font-size: 1.85rem; line-height: 1.15; color: var(--cream); letter-spacing: -0.01em;
     }
-    .demo-tag {
-      font-family: 'Courier New', monospace; font-size: 1rem;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--teal); border: 1px solid var(--border-accent);
-      border-radius: 100px; padding: 0.25em 0.9em;
-    }
-    .demo-tag.trigger { color: var(--amber); }
-    .demo-tag.clock { color: var(--cool); }
     .demo-desc {
       font-size: 1.08rem; color: var(--text); line-height: 1.68;
       margin-bottom: 1.75rem; max-width: 680px;
@@ -536,32 +530,88 @@
       background: var(--cream);
     }
 
-    /* ---- 02 Stagger cards ---- */
-    .stagger-stage {
-      display: flex; align-items: center; justify-content: center;
-      gap: clamp(0.4rem, 1.4vw, 0.9rem);
-      padding: 1.5rem;
+    /* ---- 04 Dominoes: one staggered clip ----
+       The clip animates a single number, --tip (degrees), on each .domino; the
+       tile, its floor reflection and its shadow all read it. --k is 1 except on
+       the last domino, which has nothing to lean on and scales its fall to lie
+       flat. Gap and height are fixed multiples of --dw because the JS geometry
+       that samples the keyframes assumes exactly those ratios (1 : 0.625 : 2). */
+    .domino-stage {
+      container-type: inline-size;
       background:
-        radial-gradient(ellipse at 50% 50%, rgba(94,202,187,0.05), transparent 62%),
-        linear-gradient(135deg, rgba(255,255,255,0.012), rgba(255,255,255,0.03));
+        radial-gradient(ellipse 60% 42% at 50% 62%, rgba(94,202,187,0.08), transparent 70%),
+        linear-gradient(180deg, #04070b 0%, #0a1117 62%, #05080b 100%);
     }
-    .stagger-card {
-      flex: 0 1 116px;
-      aspect-ratio: 2 / 3;
-      border-radius: 10px;
-      border: 1px solid var(--border-accent);
-      background: linear-gradient(160deg, rgba(94,202,187,0.14), rgba(10,16,22,0.92));
-      box-shadow: 0 14px 30px rgba(0,0,0,0.42);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 0.35rem;
-      opacity: 0;
-      will-change: transform, opacity;
+    .domino-stage::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 62%; bottom: 0;
+      background:
+        linear-gradient(90deg, transparent, rgba(94,202,187,0.4), transparent) top / 100% 1px no-repeat,
+        linear-gradient(180deg, rgba(3,6,9,0.55), rgba(3,6,9,0.9));
     }
-    .stagger-card b {
-      font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; color: var(--cream);
+    .domino-row {
+      --dw: min(52px, 5.6cqi);
+      position: absolute; left: 50%; top: 62%;
+      display: flex; align-items: flex-end;
+      gap: calc(var(--dw) * 0.625);
+      /* Room for the last tile lying flat, so the whole chain stays centred. */
+      padding-right: calc(var(--dw) * 2);
+      transform: translate(-50%, -100%);
     }
-    .stagger-card span {
-      font-family: 'Courier New', monospace; font-size: 1rem; color: var(--teal); letter-spacing: 0;
+    .domino {
+      --tip: 0; --k: 1;
+      position: relative;
+      width: var(--dw); height: calc(var(--dw) * 2);
+    }
+    .domino::after {
+      content: ''; position: absolute; left: -10%; bottom: -4px; height: 8px;
+      width: calc(var(--dw) * (1.2 + var(--tip) * var(--k) / 40));
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.75), transparent 70%);
+    }
+    .domino-tile {
+      position: absolute; inset: 0; z-index: 1;
+      display: grid; grid-template-rows: 1fr 1fr;
+      border-radius: calc(var(--dw) * 0.14);
+      border: 1px solid rgba(94,202,187, calc(0.22 + var(--tip) / 180));
+      background:
+        radial-gradient(ellipse 120% 60% at 30% 0%, rgba(94,202,187,0.16), transparent 60%),
+        linear-gradient(160deg, var(--lacquer-hi) 0%, var(--lacquer) 48%, var(--bg-deep) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 0 -8px 14px rgba(0,0,0,0.5),
+        0 12px 24px rgba(0,0,0,0.5);
+      transform-origin: 100% 100%;
+      transform: rotate(calc(var(--tip) * var(--k) * 1deg));
+      overflow: hidden;
+    }
+    /* Lacquer sheen, and the divider between the two faces. */
+    .domino-tile::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(118deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.05) 30%, transparent 31%);
+    }
+    .domino-tile::after {
+      content: ''; position: absolute; left: 14%; right: 14%; top: 50%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      box-shadow: 0 0 6px rgba(94,202,187,0.6);
+    }
+    /* Mirrored across the floor line: rotate about the pivot, then flip about it. */
+    .domino-ghost {
+      z-index: 0;
+      transform: scaleY(-1) rotate(calc(var(--tip) * var(--k) * 1deg));
+      opacity: 0.2;
+      -webkit-mask-image: linear-gradient(180deg, transparent 35%, #000);
+      mask-image: linear-gradient(180deg, transparent 35%, #000);
+    }
+    .domino-face {
+      display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+      padding: 16%;
+    }
+    .pip {
+      place-self: center;
+      width: 72%; aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff, var(--teal) 62%, var(--teal-dim));
+      box-shadow: 0 0 calc(2px + var(--tip) * 0.16px) rgba(94,202,187, calc(0.45 + var(--tip) / 110));
     }
 
     /* ---- 06 Smoothing ---- */
@@ -583,6 +633,15 @@
       border-bottom: none;
       border-radius: 999px 999px 0 0;
     }
+    /* Tick band: a conic of hairlines, masked to a ring near the rim. The
+       gauge is 2:1, so farthest-side from the bottom centre is the radius. */
+    .gauge-arc::before {
+      content: ''; position: absolute; inset: 0;
+      border-radius: 999px 999px 0 0;
+      background: repeating-conic-gradient(from -90deg at 50% 100%, rgba(194,204,198,0.4) 0deg 0.7deg, transparent 0.7deg 15deg);
+      -webkit-mask-image: radial-gradient(farthest-side at 50% 100%, transparent 84%, #000 85%, #000 94%, transparent 95%);
+      mask-image: radial-gradient(farthest-side at 50% 100%, transparent 84%, #000 85%, #000 94%, transparent 95%);
+    }
     .gauge-arc::after {
       content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px;
       background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
@@ -599,6 +658,12 @@
       will-change: transform;
     }
     .needle.alt { background: linear-gradient(180deg, var(--amber), rgba(217,164,65,0.15)); }
+    .needle::after {
+      content: ''; position: absolute; left: 50%; top: -3px;
+      width: 6px; height: 6px; margin-left: -3px; border-radius: 50%;
+      background: var(--teal); box-shadow: 0 0 10px 2px rgba(94,202,187,0.6);
+    }
+    .needle.alt::after { background: var(--amber); box-shadow: 0 0 10px 2px rgba(217,164,65,0.6); }
     .gauge-hub {
       position: absolute; left: 50%; bottom: -5px;
       width: 10px; height: 10px; margin-left: -5px;
@@ -611,62 +676,149 @@
     .smooth-val { font-family: 'Courier New', monospace; font-size: 1.35rem; color: var(--teal); }
     .smooth-val.alt { color: var(--amber); }
 
-    /* ---- 03 call() ---- */
-    .fuse-stage {
+    /* ---- 05 call(): a fuse on a bomb ----
+       The rig is fixed-size px so the SVG fuse, the spark's offset-path and
+       the blast origin all share one coordinate space; phones scale the rig. */
+    .bomb-stage {
       background:
-        radial-gradient(ellipse at 50% 50%, rgba(217,164,65,0.06), transparent 58%),
-        linear-gradient(180deg, #080c11 0%, #0c1219 100%);
+        radial-gradient(ellipse 55% 50% at 55% 64%, rgba(217,164,65,0.08), transparent 70%),
+        linear-gradient(180deg, #04070b 0%, #0b1117 82%, #05080b 100%);
     }
-    .fuse-rail {
-      position: absolute;
-      left: 8%; right: 8%; top: 50%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--border-accent) 12%, var(--border-accent) 88%, transparent);
+    .bomb-stage::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 82%; bottom: 0;
+      background:
+        linear-gradient(90deg, transparent, rgba(217,164,65,0.32), transparent) top / 100% 1px no-repeat,
+        linear-gradient(180deg, rgba(3,6,9,0.55), rgba(3,6,9,0.9));
     }
-    .fuse-mark {
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 1px; height: 54px;
-      margin-top: -27px;
-      background: linear-gradient(180deg, transparent, var(--amber), transparent);
+    .bomb-rig {
+      position: absolute; left: 50%; bottom: calc(18% - 8px);
+      width: 360px; height: 290px;
+      transform: translateX(-50%) scale(1.15);
+      transform-origin: 50% 100%;
     }
-    .fuse-mark span {
-      position: absolute; top: -30px; left: 10px;
-      font-family: 'Courier New', monospace; font-size: 1rem;
-      letter-spacing: 0.06em; color: var(--amber); white-space: nowrap;
+    .bomb { position: absolute; inset: 0; }
+    .bomb-shadow, .bomb-scorch {
+      position: absolute; border-radius: 50%;
     }
+    .bomb-shadow {
+      left: 120px; top: 276px; width: 180px; height: 22px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.8), transparent 70%);
+    }
+    .bomb-scorch {
+      left: 80px; top: 272px; width: 260px; height: 32px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.85) 0%, rgba(30,14,8,0.8) 40%, rgba(224,138,111,0.28) 62%, transparent 74%);
+      opacity: 0;
+    }
+    .fuse-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .fuse-svg path { fill: none; stroke-linecap: round; }
+    .fuse-ash { stroke: rgba(242,245,242,0.16); stroke-width: 2; stroke-dasharray: 0.4 1.8; }
+    /* pathLength="100": a dash of 100 is the whole fuse, so dashoffset 0 → 100
+       burns it from the free end back to the cap. */
+    .fuse-rope { stroke-dasharray: 100 200; stroke-dashoffset: 0; }
+    .fuse-rope.base { stroke: var(--rope-dark); stroke-width: 6.5; }
+    .fuse-rope.hi { stroke: var(--rope); stroke-width: 2.2; opacity: 0.85; }
+
+    .bomb-body {
+      position: absolute; inset: 0;
+      transform-origin: 210px 280px;
+    }
+    .bomb-cap {
+      position: absolute; left: 231px; top: 116px; width: 38px; height: 28px;
+      border-radius: 5px;
+      transform: rotate(30deg);
+      background: linear-gradient(180deg, var(--iron-hi), var(--iron) 60%, #0a0f14);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(134,181,232,0.12);
+    }
+    .bomb-shell, .bomb-heat {
+      position: absolute; left: 130px; top: 120px; width: 160px; height: 160px;
+      border-radius: 50%;
+    }
+    .bomb-shell {
+      background: radial-gradient(circle at 34% 28%, var(--iron-hi) 0%, var(--iron) 40%, #05080b 80%);
+      box-shadow:
+        inset -16px -20px 34px rgba(0,0,0,0.7),
+        inset 8px 10px 24px rgba(134,181,232,0.1),
+        0 0 0 1px rgba(134,181,232,0.1);
+    }
+    /* Specular highlight + a cool rim light. */
+    .bomb-shell::before {
+      content: ''; position: absolute; left: 30px; top: 24px; width: 46px; height: 24px;
+      border-radius: 50%;
+      transform: rotate(-32deg);
+      background: radial-gradient(ellipse, rgba(255,255,255,0.55), transparent 70%);
+    }
+    .bomb-shell::after {
+      content: ''; position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 78% 84%, rgba(94,202,187,0.22), transparent 38%);
+    }
+    .bomb-heat {
+      background: radial-gradient(circle at 46% 40%, rgba(255,170,90,0.7), rgba(214,84,44,0.55) 48%, rgba(120,30,12,0.2) 70%, transparent 76%);
+      box-shadow: 0 0 50px rgba(224,110,60,0.5), 0 0 110px rgba(217,164,65,0.18);
+      mix-blend-mode: screen;
+      opacity: 0;
+    }
+
+    /* The burning tip rides the fuse path itself; offset-path is set from the
+       same string as the SVG's d in JS, so the two can't drift apart. */
     .fuse-spark {
-      position: absolute;
-      top: 50%; left: 8%;
-      width: 14px; height: 14px;
-      margin: -7px 0 0 -7px;
+      position: absolute; left: 0; top: 0;
+      width: 12px; height: 12px;
       border-radius: 50%;
-      background: radial-gradient(circle at 40% 35%, #fff6e2, var(--amber) 55%, #8a5f14 100%);
-      box-shadow: 0 0 14px rgba(217,164,65,0.9), 0 0 40px rgba(217,164,65,0.35);
-      will-change: left;
+      background: radial-gradient(circle, #ffffff 0%, var(--spark) 38%, var(--amber) 72%);
+      box-shadow: 0 0 10px 3px rgba(217,164,65,0.85), 0 0 36px 12px rgba(224,138,111,0.35);
+      offset-rotate: 0deg;
+      offset-distance: 100%;
     }
-    .fuse-flash {
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 260px; height: 260px;
-      margin: -130px 0 0 -130px;
+    .fuse-spark::before {
+      content: ''; position: absolute; left: 50%; top: 50%;
+      width: 48px; height: 48px; margin: -24px 0 0 -24px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(217,164,65,0.30), transparent 64%);
-      opacity: 0;
-      will-change: transform, opacity;
+      background: repeating-conic-gradient(var(--spark) 0deg 5deg, transparent 5deg 30deg);
+      -webkit-mask-image: radial-gradient(circle, #000 0 18%, transparent 66%);
+      mask-image: radial-gradient(circle, #000 0 18%, transparent 66%);
+      animation: spark-spin 0.6s linear infinite, spark-flicker 0.14s steps(2) infinite alternate;
     }
-    .shard-origin { position: absolute; left: 50%; top: 50%; }
-    .shard {
-      position: absolute;
-      left: 0; top: 0;
-      width: 11px; height: 11px;
-      margin: -5px 0 0 -5px;
+    @keyframes spark-spin { to { transform: rotate(360deg); } }
+    @keyframes spark-flicker { from { opacity: 1; } to { opacity: 0.55; } }
+
+    /* The blast layer's own visibility is a timeline set(); everything inside
+       it belongs to the physics scene. */
+    .blast { position: absolute; left: 210px; top: 200px; width: 0; height: 0; opacity: 0; }
+    .blast > * { position: absolute; border-radius: 50%; opacity: 0; }
+    .blast-flash {
+      width: 320px; height: 320px; margin: -160px 0 0 -160px;
+      background: radial-gradient(circle, #ffffff 0%, rgba(255,231,176,0.9) 16%, rgba(217,164,65,0.45) 40%, transparent 70%);
+    }
+    .blast-fire {
+      width: 220px; height: 220px; margin: -110px 0 0 -110px;
+      background: radial-gradient(circle, var(--spark) 0%, var(--amber) 30%, rgba(224,138,111,0.75) 50%, transparent 70%);
+      filter: blur(2px);
+    }
+    .blast-ring {
+      width: 150px; height: 150px; margin: -75px 0 0 -75px;
+      border: 3px solid rgba(255,231,176,0.9);
+      box-shadow: 0 0 24px rgba(217,164,65,0.6), inset 0 0 18px rgba(217,164,65,0.4);
+    }
+    .blast-smoke {
+      width: 130px; height: 130px; margin: -65px 0 0 -65px;
+      background: radial-gradient(circle, var(--smoke), transparent 70%);
+      filter: blur(6px);
+    }
+    .debris {
+      width: var(--d); height: var(--d); margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
       border-radius: 2px;
-      background: linear-gradient(135deg, var(--amber), var(--rose));
-      box-shadow: 0 0 12px rgba(217,164,65,0.5);
-      opacity: 0;
-      will-change: transform, opacity;
+      clip-path: polygon(50% 0%, 100% 70%, 30% 100%, 0% 40%);
     }
+    .debris.hot {
+      background: linear-gradient(135deg, var(--spark), var(--amber) 45%, var(--rose));
+      filter: drop-shadow(0 0 6px rgba(217,164,65,0.8));
+    }
+    .debris.iron { background: linear-gradient(135deg, var(--iron-hi), var(--iron) 60%, #05080b); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fuse-spark::before { animation: none; }
+    }
+
     .call-log {
       list-style: none;
       margin-top: 1.1rem;
@@ -712,7 +864,7 @@
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ---- 04 Fireworks: hover-scrubbed studio preview ---- */
+    /* ---- 02 Fireworks: hover-scrubbed studio preview ---- */
     /* The whole panel is the scrub surface — stage and strip both. Cursor X
        across it maps to the playhead, so there's no separate "handle" to find. */
     .studio {
@@ -793,7 +945,7 @@
       will-change: transform;
     }
 
-    /* ---- 05 Campfire: four coprime looping timelines ---- */
+    /* ---- 03 Campfire: four coprime looping timelines ---- */
     .camp-stage {
       height: 340px;
       background: #03060b;
@@ -1055,7 +1207,8 @@
       transform-origin: bottom center;
       transform: scaleY(0.12);
       opacity: 0.3;
-      background: linear-gradient(180deg, var(--teal), #2b6f66);
+      background: linear-gradient(180deg, #a6f1e6 0%, var(--teal) 16%, #2b6f66 100%);
+      box-shadow: 0 0 16px rgba(94,202,187,0.22), inset 0 1px 0 rgba(255,255,255,0.3);
       will-change: transform, opacity;
     }
     .transport { display: flex; align-items: center; gap: 0.9rem; margin-top: 1.25rem; flex-wrap: wrap; }
@@ -1117,17 +1270,15 @@
       .orbit-3 { width: 252px; height: 252px; margin: -126px 0 0 -126px; }
       .hero-sun { width: 42px; height: 42px; margin: -21px 0 0 -21px; }
       .hero-comet::after { width: 90px; }
-      .stagger-stage { padding: 1rem 0.6rem; }
-      .stagger-card { flex: 0 1 34px; border-radius: 7px; }
-      .stagger-card b { font-size: 1rem; }
-      .stagger-card span { display: none; }
-      /* Hero ruler: phone rows are all track — same trade as 04's strip below,
+      /* Dominoes size themselves off the stage (cqi); the bomb rig is fixed px. */
+      .bomb-rig { transform: translateX(-50%) scale(0.78); }
+      /* Hero ruler: phone rows are all track — same trade as 02's strip below,
          and it leaves the full width for drag-scrubbing. The overlay's left
          offset has to follow the vanished name gutter. */
       #hero-ruler .lane { grid-template-columns: 1fr; }
       #hero-ruler .lane-name { display: none; }
       #hero-ruler .ruler-overlay { left: 0.9rem; }
-      /* 04's strip: the clip names eat most of a phone-width row, and the bars
+      /* 02's strip: the clip names eat most of a phone-width row, and the bars
          are what the section is actually showing. Drop the name gutter and give
          the tracks the full width — the overlay's left offset has to follow. */
       .studio-lane { grid-template-columns: 1fr; }
@@ -1200,9 +1351,6 @@
     <!-- ---- 01 Hero: offset clips on one axis ---- -->
     <section class="demo-section" id="sec-hero">
       <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag">scroll · scrub</span>
-        </div>
         <h2>Clips at offset start times</h2>
       </div>
       <p class="demo-desc">A star, three orbits, a comet and a staggered sky — seven clips on one time axis, each with its own <em>at</em> and <em>duration</em>, deliberately overlapping. A <code>scrollDriver</code> maps this stage's trip through the viewport onto the playhead, so scrolling is scrubbing: run it backwards and the planets orbit backwards. The ruler underneath is drawn from the very same clip list; the white line is the live playhead — hover or drag it to scrub by hand, and when you let go it snaps back to wherever the scroll left it.</p>
@@ -1317,118 +1465,9 @@ heroRuler.<span class="fn">addEventListener</span>(<span class="str">'pointerlea
       </details>
     </section>
 
-    <!-- ---- 02 Stagger ---- -->
-    <section class="demo-section" id="sec-stagger">
-      <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag">scroll · scrub</span>
-        </div>
-        <h2>One clip, nine start times</h2>
-      </div>
-      <p class="demo-desc">A single <code>tween()</code> over a nine-element selector with <em>stagger: 150</em>. Each element gets the same keyframes on its own window, offset by <em>index × 150ms</em>, and the timeline's duration stretches to cover the last one. Outside its window a clip holds its edge frames (<em>fill: 'both'</em>), which is why cards sit patiently at their 0% state until their turn arrives — and stay put afterwards.</p>
-
-      <div class="scrub-track pinned" id="stagger-track">
-        <div class="scrub-sticky">
-          <div class="stage scrub-stage stagger-stage" id="stagger-stage"></div>
-          <div class="meter">
-            <span class="meter-label">driver progress</span>
-            <span class="meter-track"><i class="meter-fill"></i></span>
-            <span class="meter-num">0.000</span>
-          </div>
-        </div>
-      </div>
-
-      <details class="code-aside">
-        <summary>view the timeline()</summary>
-        <pre><code><span class="kw">const</span> cardsTl = <span class="fn">timeline</span>();
-
-cardsTl.<span class="fn">tween</span>(<span class="str">'.stagger-card'</span>, {
-  <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'translateY(70px) rotate(-8deg) scale(0.86)'</span> },
-  <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translateY(0px) rotate(0deg) scale(1)'</span> },
-}, { <span class="prop">duration</span>: <span class="num">700</span>, <span class="prop">stagger</span>: <span class="num">150</span>, <span class="prop">easing</span>: <span class="str">'back-out'</span> });
-
-<span class="cm">// duration → 700 + 8 × 150 = 1900ms</span>
-
-<span class="cm">// The stage is sticky at top:15vh and 62vh tall, so the range is written to</span>
-<span class="cm">// match: progress 0 the moment it pins, 1 as it unpins.</span>
-<span class="fn">scrollDriver</span>(cardsTl, {
-  <span class="prop">trigger</span>: <span class="str">'#stagger-track'</span>,
-  <span class="prop">start</span>: <span class="str">'top 15%'</span>,
-  <span class="prop">end</span>: <span class="str">'bottom 77%'</span>,
-  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-stagger'</span>),
-});</code></pre>
-      </details>
-    </section>
-
-    <!-- ---- 03 call() ---- -->
-    <section class="demo-section" id="sec-call">
-      <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag">scroll · scrub</span>
-          <span class="demo-tag trigger">+ physics</span>
-        </div>
-        <h2>A scene fired from a timeline position</h2>
-      </div>
-      <p class="demo-desc">The spark is scrubbed; the burst is not. <code>tl.call()</code> registers a callback at a labelled time — here <em>'ignite'</em>, the end of the spark's clip — and it fires when the playhead crosses it in either direction, scrubbing included. Scroll down past the mark to see direction <em>+1</em> launch a spring-driven burst; scroll back up and the same crossing reports <em>-1</em>, which the callback ignores. This is the bridge between the two halves of the ecosystem.</p>
-
-      <div class="scrub-track pinned" id="fuse-track">
-        <div class="scrub-sticky">
-          <div class="stage scrub-stage fuse-stage">
-            <div class="fuse-rail"></div>
-            <div class="fuse-mark"><span>ignite · 1200ms</span></div>
-            <i class="fuse-flash" id="fuse-flash"></i>
-            <i class="fuse-spark" id="fuse-spark"></i>
-            <div class="shard-origin" id="shard-origin"></div>
-          </div>
-          <ul class="call-log" id="call-log"></ul>
-        </div>
-      </div>
-
-      <details class="code-aside">
-        <summary>view the timeline() + call()</summary>
-        <pre><code><span class="cm">// The physics half: a spring burst, built once, replayed on every crossing.</span>
-<span class="cm">// (Springs are opt-in — registerPhysics(PhysicsEngine) ran once at page setup.)</span>
-<span class="kw">const</span> burst = <span class="fn">scene</span>()
-  .<span class="fn">stagger</span>(shards, (el, i) =&gt; {
-    <span class="kw">const</span> angle = (i / shards.length) * Math.PI * <span class="num">2</span>;
-    <span class="kw">return</span> {
-      <span class="prop">from</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translate(0px, 0px) scale(0.3)'</span> },
-      <span class="prop">to</span>: {
-        <span class="prop">opacity</span>: <span class="str">'1'</span>,
-        <span class="prop">transform</span>: <span class="str">`translate(${Math.cos(angle) * 200}px, ${Math.sin(angle) * 120}px) scale(1)`</span>,
-      },
-      <span class="prop">physics</span>: { <span class="prop">attraction</span>: <span class="num">0.018</span>, <span class="prop">friction</span>: <span class="num">0.12</span> },
-    };
-  }, { <span class="prop">interval</span>: <span class="num">14</span> })
-  <span class="cm">// Scene steps are sequential: this waits for every spring to settle.</span>
-  .<span class="fn">stagger</span>(shards, { <span class="prop">to</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span> }, <span class="prop">duration</span>: <span class="num">320</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> }, { <span class="prop">interval</span>: <span class="num">12</span> });
-
-<span class="cm">// The scrubbed half.</span>
-<span class="kw">const</span> fuseTl = <span class="fn">timeline</span>({ <span class="prop">defaults</span>: { <span class="prop">easing</span>: <span class="str">'linear'</span> } });
-
-fuseTl
-  .<span class="fn">tween</span>(<span class="str">'#fuse-spark'</span>, { <span class="num">0</span>: { <span class="prop">left</span>: <span class="str">'8%'</span> }, <span class="num">100</span>: { <span class="prop">left</span>: <span class="str">'50%'</span> } }, { <span class="prop">duration</span>: <span class="num">1200</span> })
-  .<span class="fn">label</span>(<span class="str">'ignite'</span>)                        <span class="cm">// names the current end: 1200ms</span>
-  .<span class="fn">tween</span>(<span class="str">'#fuse-flash'</span>, {
-    <span class="num">0</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'scale(0.35)'</span> },
-    <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'scale(1)'</span> },
-  }, { <span class="prop">at</span>: <span class="str">'ignite'</span>, <span class="prop">duration</span>: <span class="num">450</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> })
-  .<span class="fn">call</span>((direction) =&gt; {
-    <span class="fn">logCrossing</span>(direction);
-    <span class="kw">if</span> (direction === <span class="num">1</span>) burst.<span class="fn">play</span>();   <span class="cm">// forward crossings only</span>
-  }, { <span class="prop">at</span>: <span class="str">'ignite'</span> });                    <span class="cm">// once: false — re-arms every pass</span>
-
-<span class="cm">// scrollDriver seeks non-silently by default, so scrubbing fires calls.</span>
-<span class="fn">scrollDriver</span>(fuseTl, { <span class="prop">trigger</span>: <span class="str">'#fuse-track'</span>, <span class="prop">start</span>: <span class="str">'top 15%'</span>, <span class="prop">end</span>: <span class="str">'bottom 77%'</span> });</code></pre>
-      </details>
-    </section>
-
-    <!-- ---- 04 Fireworks studio ---- -->
+    <!-- ---- 02 Fireworks studio ---- -->
     <section class="demo-section" id="sec-studio">
       <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag clock">hover · scrub · play</span>
-        </div>
         <h2>Your cursor is the playhead</h2>
       </div>
       <p class="demo-desc">No scroll and no physics here — cursor X <em>is</em> the playhead, so sweep backwards and every firework implodes while its mortar drops back to earth. The strip below is drawn from the same clip list that built the timeline, lit where a clip is actually interpolating and dimmed where it's only holding a fill frame. Pull the cursor away and <code>play()</code> picks it up from exactly where you left it.</p>
@@ -1532,12 +1571,9 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
       </details>
     </section>
 
-    <!-- ---- 05 Looping timelines ---- -->
+    <!-- ---- 03 Looping timelines ---- -->
     <section class="demo-section" id="sec-fire">
       <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag clock">clock · loop</span>
-        </div>
         <h2>A timeline that never ends</h2>
       </div>
       <p class="demo-desc">A single loop eventually gives itself away. This fire is four <code>loop: true</code> timelines on the shared ticker — flames at 1700ms, embers at 2300ms, pines at 5300ms and glow at 1300ms. Their coprime rhythms only realign after roughly 7.5 hours, so the composite never visibly repeats. The lanes underneath draw all four to one shared scale — same pixels per second, different wrap points — so you can watch them slide out of phase. Leaving the viewport pauses all four; returning resumes them from their own playheads.</p>
@@ -1627,12 +1663,159 @@ fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">pro
       </details>
     </section>
 
+    <!-- ---- 04 Stagger ---- -->
+    <section class="demo-section" id="sec-stagger">
+      <div class="demo-header">
+        <h2>One clip, nine start times</h2>
+      </div>
+      <p class="demo-desc">A single <code>tween()</code> over nine dominoes with <em>stagger: 300</em>: the same keyframes on every tile, each window offset by <em>index × 300ms</em> — exactly how long a tile takes to reach the next one. The keyframes aren't hand-drawn; they're sampled from the contact geometry, so every tile slows as it shoves its neighbour and comes to rest on its face. It's scrubbed, so scroll back up and the chain stands itself back up.</p>
+
+      <div class="scrub-track pinned" id="stagger-track">
+        <div class="scrub-sticky">
+          <div class="stage scrub-stage domino-stage">
+            <div class="domino-row" id="domino-row"></div>
+          </div>
+          <div class="meter">
+            <span class="meter-label">driver progress</span>
+            <span class="meter-track"><i class="meter-fill"></i></span>
+            <span class="meter-num">0.000</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timeline()</summary>
+        <pre><code><span class="cm">// Geometry in domino widths — the CSS uses the same ratios.</span>
+<span class="kw">const</span> W = <span class="num">1</span>, H = <span class="num">2</span>, S = <span class="num">1.625</span>;   <span class="cm">// width, height, pivot-to-pivot</span>
+
+<span class="cm">// The angle a domino settles at while its neighbour leans at b: its top</span>
+<span class="cm">// corner sits on the neighbour's face. lean(0) is the first touch, ~18°.</span>
+<span class="kw">const</span> <span class="fn">lean</span> = (b) =&gt; b + Math.<span class="fn">asin</span>((S * Math.<span class="fn">cos</span>(b) - W) / H);
+
+<span class="cm">// One fall in T-long segments: a flicked fall to the first touch, then each</span>
+<span class="cm">// segment rides the neighbour — which is this same curve, one T behind.</span>
+<span class="kw">const</span> SEG = <span class="num">5</span>, T = <span class="num">300</span>;
+<span class="kw">const</span> <span class="fn">tip</span> = (t) =&gt; (t &lt;= <span class="num">1</span> ? (<span class="fn">lean</span>(<span class="num">0</span>) * (t + t * t)) / <span class="num">2</span> : <span class="fn">lean</span>(<span class="fn">tip</span>(t - <span class="num">1</span>)));
+<span class="kw">const</span> <span class="fn">deg</span> = (r) =&gt; (r * <span class="num">180</span>) / Math.PI;
+
+<span class="kw">const</span> dominoFrames = {};
+<span class="kw">for</span> (<span class="kw">let</span> p = <span class="num">0</span>; p &lt;= <span class="num">100</span>; p += <span class="num">2</span>) {
+  dominoFrames[p] = { <span class="str">'--tip'</span>: <span class="fn">deg</span>(<span class="fn">tip</span>((p / <span class="num">100</span>) * SEG)).<span class="fn">toFixed</span>(<span class="num">2</span>) };
+}
+
+<span class="cm">// CSS: .domino-tile { transform: rotate(calc(var(--tip) * var(--k) * 1deg)) }</span>
+<span class="cm">// The last tile has nothing to lean on, so its --k stretches the fall to 90°.</span>
+dominoRow.lastElementChild.style.<span class="fn">setProperty</span>(<span class="str">'--k'</span>, <span class="num">90</span> / dominoFrames[<span class="num">100</span>][<span class="str">'--tip'</span>]);
+
+<span class="kw">const</span> dominoTl = <span class="fn">timeline</span>();
+dominoTl.<span class="fn">tween</span>(<span class="str">'.domino'</span>, dominoFrames, { <span class="prop">duration</span>: SEG * T, <span class="prop">stagger</span>: T, <span class="prop">easing</span>: <span class="str">'linear'</span> });
+
+<span class="cm">// duration → 1500 + 8 × 300 = 3900ms</span>
+
+<span class="cm">// The stage is sticky at top:15vh and 62vh tall, so the range is written to</span>
+<span class="cm">// match: progress 0 the moment it pins, 1 as it unpins.</span>
+<span class="fn">scrollDriver</span>(dominoTl, {
+  <span class="prop">trigger</span>: <span class="str">'#stagger-track'</span>,
+  <span class="prop">start</span>: <span class="str">'top 15%'</span>,
+  <span class="prop">end</span>: <span class="str">'bottom 77%'</span>,
+  <span class="prop">onProgress</span>: <span class="fn">meter</span>(<span class="str">'sec-stagger'</span>),
+});</code></pre>
+      </details>
+    </section>
+
+    <!-- ---- 05 call() ---- -->
+    <section class="demo-section" id="sec-call">
+      <div class="demo-header">
+        <h2>A scene fired from a timeline position</h2>
+      </div>
+      <p class="demo-desc">The fuse is scrubbed; the explosion is not. <code>tl.call()</code> registers a callback at a labelled time — <em>'ignite'</em>, where the fuse meets the bomb — and fires it whenever the playhead crosses it, scrubbing included. Direction <em>+1</em> plays a spring-driven blast scene; <em>-1</em> is logged and ignored. The bomb itself belongs to the timeline, so scroll back up and it's whole again, fuse and all.</p>
+
+      <div class="scrub-track pinned" id="fuse-track">
+        <div class="scrub-sticky">
+          <div class="stage scrub-stage bomb-stage">
+            <div class="bomb-rig">
+              <i class="bomb-scorch" id="bomb-scorch"></i>
+              <div class="bomb" id="bomb">
+                <i class="bomb-shadow"></i>
+                <svg class="fuse-svg" viewBox="0 0 360 290" aria-hidden="true">
+                  <path class="fuse-path fuse-ash" pathLength="100" />
+                  <path class="fuse-path fuse-rope base" pathLength="100" />
+                  <path class="fuse-path fuse-rope hi" pathLength="100" />
+                </svg>
+                <div class="bomb-body" id="bomb-body">
+                  <i class="bomb-cap"></i>
+                  <i class="bomb-shell"></i>
+                  <i class="bomb-heat" id="bomb-heat"></i>
+                </div>
+                <i class="fuse-spark" id="fuse-spark"></i>
+              </div>
+              <div class="blast" id="blast">
+                <i class="blast-fire"></i>
+                <i class="blast-flash"></i>
+                <i class="blast-ring"></i>
+              </div>
+            </div>
+          </div>
+          <ul class="call-log" id="call-log"></ul>
+        </div>
+      </div>
+
+      <details class="code-aside">
+        <summary>view the timeline() + call()</summary>
+        <pre><code><span class="cm">// The physics half: one blast scene, built once, replayed on every crossing.</span>
+<span class="cm">// (Springs are opt-in — registerPhysics(PhysicsEngine) ran once at page setup.)</span>
+<span class="cm">// puffs[i] and flight[i] are seeded per element when the markup is built.</span>
+<span class="kw">const</span> boom = <span class="fn">scene</span>()
+  .<span class="fn">set</span>(<span class="str">'#blast &gt; *'</span>, { <span class="prop">opacity</span>: <span class="str">'0'</span> })   <span class="cm">// clear a stopped run's leftovers first</span>
+  .<span class="fn">parallel</span>((b) =&gt; b
+    .<span class="fn">fromTo</span>(<span class="str">'.blast-flash'</span>, { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'scale(0.15)'</span> },
+      { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'scale(2)'</span> }, { <span class="prop">duration</span>: <span class="num">700</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> })
+    .<span class="fn">fromTo</span>(<span class="str">'.blast-fire'</span>, { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'scale(0.2)'</span> },
+      { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'scale(1.7)'</span> }, { <span class="prop">duration</span>: <span class="num">1000</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> })
+    .<span class="fn">fromTo</span>(<span class="str">'.blast-ring'</span>, { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'scale(0.2)'</span> },
+      { <span class="prop">opacity</span>: <span class="str">'0'</span>, <span class="prop">transform</span>: <span class="str">'scale(3)'</span> }, { <span class="prop">duration</span>: <span class="num">820</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> })
+    .<span class="fn">stagger</span>(<span class="str">'.blast-smoke'</span>, (el, i) =&gt; ({
+      <span class="prop">from</span>: { <span class="prop">opacity</span>: <span class="str">'0.9'</span>, <span class="prop">transform</span>: <span class="str">'translate(0px, 0px) scale(0.3)'</span> },
+      <span class="prop">to</span>:   { <span class="prop">opacity</span>: <span class="str">'0'</span>,   <span class="prop">transform</span>: <span class="str">`translate(${puffs[i].x}px, ${puffs[i].y}px) scale(1.8)`</span> },
+      <span class="prop">duration</span>: <span class="num">1800</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span>,
+    }), { <span class="prop">interval</span>: <span class="num">30</span> })
+    .<span class="fn">stagger</span>(<span class="str">'.debris'</span>, (el, i) =&gt; ({
+      <span class="prop">from</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">'translate(0px, 0px) rotate(0deg) scale(0.4)'</span> },
+      <span class="prop">to</span>:   { <span class="prop">opacity</span>: <span class="str">'1'</span>, <span class="prop">transform</span>: <span class="str">`translate(${flight[i].x}px, ${flight[i].y}px) rotate(${flight[i].spin}deg) scale(1)`</span> },
+      <span class="prop">physics</span>: { <span class="prop">attraction</span>: <span class="num">0.03</span>, <span class="prop">friction</span>: <span class="num">0.11</span> },
+    }), { <span class="prop">interval</span>: <span class="num">4</span> }))
+  <span class="cm">// Steps are sequential: the debris fades once every spring has settled.</span>
+  .<span class="fn">stagger</span>(<span class="str">'.debris'</span>, { <span class="prop">to</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span> }, <span class="prop">duration</span>: <span class="num">380</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> }, { <span class="prop">interval</span>: <span class="num">8</span> });
+
+<span class="cm">// The scrubbed half. The rope is pathLength="100", so a dashoffset of 100 is</span>
+<span class="cm">// a fully burnt fuse; the spark's offset-path is the same path string.</span>
+<span class="kw">const</span> fuseTl = <span class="fn">timeline</span>({ <span class="prop">defaults</span>: { <span class="prop">easing</span>: <span class="str">'linear'</span> } });
+
+fuseTl
+  .<span class="fn">tween</span>(<span class="str">'.fuse-rope'</span>, { <span class="num">0</span>: { <span class="prop">strokeDashoffset</span>: <span class="str">'0'</span> }, <span class="num">100</span>: { <span class="prop">strokeDashoffset</span>: <span class="str">'100'</span> } }, { <span class="prop">duration</span>: <span class="num">1200</span> })
+  .<span class="fn">tween</span>(<span class="str">'#fuse-spark'</span>, { <span class="num">0</span>: { <span class="prop">offsetDistance</span>: <span class="str">'100%'</span> }, <span class="num">100</span>: { <span class="prop">offsetDistance</span>: <span class="str">'0%'</span> } }, { <span class="prop">at</span>: <span class="num">0</span>, <span class="prop">duration</span>: <span class="num">1200</span> })
+  .<span class="fn">tween</span>(<span class="str">'#bomb-heat'</span>, { <span class="num">0</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span> }, <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span> } }, { <span class="prop">at</span>: <span class="num">500</span>, <span class="prop">duration</span>: <span class="num">700</span>, <span class="prop">easing</span>: <span class="str">'ease-in'</span> })
+  .<span class="fn">tween</span>(<span class="str">'#bomb-body'</span>, shake, { <span class="prop">at</span>: <span class="num">850</span>, <span class="prop">duration</span>: <span class="num">350</span> })
+  .<span class="fn">label</span>(<span class="str">'ignite'</span>)                              <span class="cm">// names the current end: 1200ms</span>
+  <span class="cm">// The timeline owns what shows: past 'ignite' the bomb is gone and the blast</span>
+  <span class="cm">// layer is up; scroll back and both set()s un-apply, deterministically.</span>
+  .<span class="fn">set</span>(<span class="str">'#bomb'</span>, { <span class="prop">opacity</span>: <span class="str">'0'</span> }, { <span class="prop">at</span>: <span class="str">'ignite'</span> })
+  .<span class="fn">set</span>(<span class="str">'#blast'</span>, { <span class="prop">opacity</span>: <span class="str">'1'</span> }, { <span class="prop">at</span>: <span class="str">'ignite'</span> })
+  .<span class="fn">tween</span>(<span class="str">'#bomb-scorch'</span>, { <span class="num">0</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span> }, <span class="num">100</span>: { <span class="prop">opacity</span>: <span class="str">'1'</span> } }, { <span class="prop">at</span>: <span class="str">'ignite'</span>, <span class="prop">duration</span>: <span class="num">500</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> })
+  .<span class="fn">call</span>((direction) =&gt; {
+    <span class="fn">logCrossing</span>(direction);
+    boom.<span class="fn">stop</span>();                              <span class="cm">// a quick re-cross restarts it cleanly</span>
+    <span class="kw">if</span> (direction === <span class="num">1</span>) boom.<span class="fn">play</span>();          <span class="cm">// forward crossings only</span>
+  }, { <span class="prop">at</span>: <span class="str">'ignite'</span> });                         <span class="cm">// once: false — re-arms every pass</span>
+
+<span class="cm">// scrollDriver seeks non-silently by default, so scrubbing fires calls.</span>
+<span class="fn">scrollDriver</span>(fuseTl, { <span class="prop">trigger</span>: <span class="str">'#fuse-track'</span>, <span class="prop">start</span>: <span class="str">'top 15%'</span>, <span class="prop">end</span>: <span class="str">'bottom 77%'</span> });</code></pre>
+      </details>
+    </section>
+
     <!-- ---- 06 Smoothing ---- -->
     <section class="demo-section" id="sec-smooth">
       <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag">scroll · scrub</span>
-        </div>
         <h2>Locked vs. smoothed</h2>
       </div>
       <p class="demo-desc">Two identical timelines, one scroll range, two drivers. The left needle is welded to the scroll position; the right one lerps toward it with <em>smoothing: 150</em> — a time constant in milliseconds, so it closes ~63% of the gap every 150ms regardless of frame rate. Flick the page and watch the amber needle trail the teal one, then settle. Smoothing rides the shared ticker and unsubscribes the moment it catches up.</p>
@@ -1700,9 +1883,6 @@ smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; 
     <!-- ---- 07 viewTrigger + physics ---- -->
     <section class="demo-section" id="sec-pop">
       <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag trigger">viewport · physics</span>
-        </div>
         <h2>Triggered, not scrubbed</h2>
       </div>
       <p class="demo-desc">Nothing here is on a playhead. <code>viewTrigger</code> is an IntersectionObserver wrapper: when the stage enters the viewport it plays an <em>animation-engine</em> scene — springs, one per bubble, each with its own friction, settling on their own schedule. That's precisely what a scrubbed clip can't express: a spring has no position-at-time to sample. <em>once: true</em> disconnects the observer after the first entry, so the button below is the only encore.</p>
@@ -1758,9 +1938,6 @@ $(<span class="str">'#pop-replay'</span>).<span class="fn">addEventListener</spa
     <!-- ---- 08 Timed playback ---- -->
     <section class="demo-section" id="sec-play">
       <div class="demo-header">
-        <div class="demo-tags">
-          <span class="demo-tag clock">play · scrub</span>
-        </div>
         <h2>The same timeline, on a clock</h2>
       </div>
       <p class="demo-desc">Nothing about a timeline assumes scroll. <code>play()</code> rides animation-engine's shared ticker and returns a promise that resolves on completion or pause; <code>timeScale()</code> composes with the ticker's own. Drag the slider and the very same clips are driven by <code>progress(p)</code> instead — the playhead doesn't care who is moving it.</p>
@@ -2067,94 +2244,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     heroRuler.addEventListener('pointercancel', heroSnapBack);
 
     // ============================================================
-    // 02 — One clip, nine start times (stagger)
-    // ============================================================
-    const staggerStage = $('#stagger-stage');
-    for (let i = 0; i < 9; i += 1) {
-      const card = document.createElement('div');
-      card.className = 'stagger-card';
-      card.innerHTML = `<b>${i + 1}</b><span>+${i * 150}ms</span>`;
-      staggerStage.appendChild(card);
-    }
-
-    const cardsTl = timeline();
-    cardsTl.tween('.stagger-card', {
-      0: { opacity: '0', transform: 'translateY(70px) rotate(-8deg) scale(0.86)' },
-      100: { opacity: '1', transform: 'translateY(0px) rotate(0deg) scale(1)' },
-    }, { duration: 700, stagger: 150, easing: 'back-out' });
-    countTimeline(cardsTl, 1);
-
-    // The stage is sticky at top:15vh and 62vh tall, so the range is written to
-    // match: progress 0 the moment it pins, 1 as it unpins.
-    const cardsDriver = scrollDriver(cardsTl, {
-      trigger: '#stagger-track',
-      start: 'top 15%',
-      end: 'bottom 77%',
-      onProgress: meter('sec-stagger'),
-    });
-
-    // ============================================================
-    // 03 — A scene fired from a timeline position (call)
-    // ============================================================
-    const shardOrigin = $('#shard-origin');
-    for (let i = 0; i < 16; i += 1) {
-      const shard = document.createElement('i');
-      shard.className = 'shard';
-      shardOrigin.appendChild(shard);
-    }
-    const shards = $$('.shard');
-
-    // The physics half: a spring burst, built once, replayed on every crossing.
-    // Two steps, so the shards stay lit for the whole flight and only fade
-    // once every spring has settled.
-    const burst = scene()
-      .stagger(shards, (el, i) => {
-        const angle = (i / shards.length) * Math.PI * 2;
-        return {
-          from: { opacity: '1', transform: 'translate(0px, 0px) scale(0.3)' },
-          to: {
-            opacity: '1',
-            transform: `translate(${Math.cos(angle) * 200}px, ${Math.sin(angle) * 120}px) scale(1)`,
-          },
-          physics: { attraction: 0.018, friction: 0.12 },
-        };
-      }, { interval: 14 })
-      .stagger(shards, { to: { opacity: '0' }, duration: 320, easing: 'ease-out' }, { interval: 12 });
-
-    const callLog = $('#call-log');
-    function logCrossing(direction) {
-      const item = document.createElement('li');
-      item.innerHTML = direction === 1
-        ? `<b>▸ call fired</b> · direction <i>+1</i> · burst.play()`
-        : `▸ call fired · direction <i>-1</i> · ignored`;
-      callLog.prepend(item);
-      while (callLog.children.length > 5) callLog.lastElementChild.remove();
-    }
-
-    // The scrubbed half.
-    const fuseTl = timeline({ defaults: { easing: 'linear' } });
-    fuseTl
-      .tween('#fuse-spark', { 0: { left: '8%' }, 100: { left: '50%' } }, { duration: 1200 })
-      .label('ignite')                          // names the current end: 1200ms
-      .tween('#fuse-flash', {
-        0: { opacity: '0', transform: 'scale(0.35)' },
-        100: { opacity: '1', transform: 'scale(1)' },
-      }, { at: 'ignite', duration: 450, easing: 'ease-out' })
-      .call((direction) => {
-        logCrossing(direction);
-        if (direction === 1) burst.play();      // forward crossings only
-      }, { at: 'ignite' });                     // once: false — re-arms every pass
-    countTimeline(fuseTl, 2);
-
-    // scrollDriver seeks non-silently by default, so scrubbing fires calls.
-    const fuseDriver = scrollDriver(fuseTl, {
-      trigger: '#fuse-track',
-      start: 'top 15%',
-      end: 'bottom 77%',
-    });
-
-    // ============================================================
-    // 04 — Your cursor is the playhead (hover-scrubbed studio preview)
+    // 02 — Your cursor is the playhead (hover-scrubbed studio preview)
     // ============================================================
 
     // Static sky and particle variation use the same seeded LCG pattern as the
@@ -2412,7 +2502,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 05 — A timeline that never ends (four coprime loops)
+    // 03 — A timeline that never ends (four coprime loops)
     // ============================================================
     // Static variation is seeded and stored in CSS custom properties. Every
     // element in a clip shares one FrameEngine, so per-element randomness does
@@ -2566,6 +2656,183 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     viewTrigger('#sec-fire', { enter: playFire, leave: pauseFire });
 
     // ============================================================
+    // 04 — One clip, nine start times (stagger → a domino chain)
+    // ============================================================
+    // Classic faces, climbing pip counts. The floor reflection is a clone of
+    // the tile that reads the same --tip, so one clip moves both.
+    const dominoRow = $('#domino-row');
+    const DOMINO_FACES = [[1, 1], [1, 2], [2, 3], [3, 3], [3, 4], [4, 5], [5, 5], [5, 6], [6, 6]];
+    const PIP_CELLS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+    const dominoFace = (n) =>
+      `<span class="domino-face">${PIP_CELLS[n]
+        .map((c) => `<i class="pip" style="grid-area: ${Math.floor(c / 3) + 1} / ${(c % 3) + 1}"></i>`)
+        .join('')}</span>`;
+    DOMINO_FACES.forEach(([top, bottom]) => {
+      const domino = document.createElement('div');
+      domino.className = 'domino';
+      const faces = dominoFace(top) + dominoFace(bottom);
+      domino.innerHTML =
+        `<span class="domino-tile domino-ghost" aria-hidden="true">${faces}</span>` +
+        `<span class="domino-tile">${faces}</span>`;
+      dominoRow.appendChild(domino);
+    });
+
+    // Geometry in domino widths. These ratios are baked into the CSS (gap is
+    // 0.625 × --dw, height 2 × --dw), so the keyframes and the layout agree.
+    const W = 1, H = 2, S = 1.625; // width, height, pivot-to-pivot
+
+    // The angle a domino settles at while its neighbour leans at b: its top
+    // corner sits on the neighbour's face. lean(0) is the first touch (~18°);
+    // iterating it converges on acos(W / S), the full-chain rest angle.
+    const lean = (b) => b + Math.asin((S * Math.cos(b) - W) / H);
+
+    // One fall in T-long segments: a flicked fall to the first touch (starting
+    // with some speed, so the impact reads as a hand-off rather than a stall),
+    // then each segment rides the neighbour — which is this same curve one T
+    // behind. That's what lets one stagger stand in for a contact simulation.
+    const SEG = 5, T = 300;
+    const tip = (t) => (t <= 1 ? (lean(0) * (t + t * t)) / 2 : lean(tip(t - 1)));
+    const deg = (r) => (r * 180) / Math.PI;
+
+    const dominoFrames = {};
+    for (let p = 0; p <= 100; p += 2) {
+      dominoFrames[p] = { '--tip': deg(tip((p / 100) * SEG)).toFixed(2) };
+    }
+
+    // The last tile has nothing to lean on, so its --k stretches the same
+    // curve until it lies flat. Not a keyframe — writeStyles never touches it.
+    dominoRow.lastElementChild.style.setProperty('--k', 90 / dominoFrames[100]['--tip']);
+
+    const dominoTl = timeline();
+    dominoTl.tween('.domino', dominoFrames, { duration: SEG * T, stagger: T, easing: 'linear' });
+    countTimeline(dominoTl, 1);
+
+    // The stage is sticky at top:15vh and 62vh tall, so the range is written to
+    // match: progress 0 the moment it pins, 1 as it unpins.
+    const dominoDriver = scrollDriver(dominoTl, {
+      trigger: '#stagger-track',
+      start: 'top 15%',
+      end: 'bottom 77%',
+      onProgress: meter('sec-stagger'),
+    });
+
+    // ============================================================
+    // 05 — A scene fired from a timeline position (call → a bomb)
+    // ============================================================
+    // One path string feeds the SVG fuse and the spark's offset-path, so the
+    // burning tip can't drift off the rope. Coordinates are the rig's px.
+    const FUSE_D = 'M257 118 C 282 84, 266 46, 226 50 S 162 92, 118 70 S 66 10, 30 38';
+    $$('.fuse-path').forEach((path) => path.setAttribute('d', FUSE_D));
+    $('#fuse-spark').style.offsetPath = `path('${FUSE_D}')`;
+
+    // Seeded like the other stages, so the blast is the same shape every load.
+    const blastLayer = $('#blast');
+    let blastSeed = 9102026;
+    const blastRnd = () => ((blastSeed = (blastSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+
+    const puffs = [];
+    for (let i = 0; i < 7; i += 1) {
+      const puff = document.createElement('i');
+      puff.className = 'blast-smoke';
+      blastLayer.prepend(puff); // behind the flash
+      const angle = -Math.PI / 2 + (i - 3) * 0.45;
+      const reach = 60 + blastRnd() * 40;
+      puffs.push({ x: Math.round(Math.cos(angle) * reach * 1.4), y: Math.round(Math.sin(angle) * reach - 20) });
+    }
+
+    const flight = [];
+    for (let i = 0; i < 20; i += 1) {
+      const bit = document.createElement('i');
+      bit.className = i % 3 === 0 ? 'debris iron' : 'debris hot';
+      bit.style.setProperty('--d', `${(8 + blastRnd() * 12).toFixed(1)}px`);
+      blastLayer.appendChild(bit);
+      const angle = (i / 20) * Math.PI * 2 + (blastRnd() - 0.5) * 0.5;
+      const reach = 130 + blastRnd() * 120;
+      flight.push({
+        x: Math.round(Math.cos(angle) * reach),
+        // Squashed vertically and floored at the ground line (80px below the
+        // bomb's centre), so low shards skid instead of sinking.
+        y: Math.round(Math.min(80, Math.sin(angle) * reach * 0.7 + 20)),
+        spin: Math.round((blastRnd() - 0.5) * 540),
+      });
+    }
+
+    // The physics half: one blast scene, built once, replayed on every crossing.
+    const boom = scene()
+      // Staggered items wait their turn before applying `from`, so a restart
+      // would briefly show the stopped run's leftovers. Clear them first.
+      .set('#blast > *', { opacity: '0' })
+      .parallel((b) => b
+        .fromTo('.blast-flash', { opacity: '1', transform: 'scale(0.15)' },
+          { opacity: '0', transform: 'scale(2)' }, { duration: 700, easing: 'ease-out' })
+        .fromTo('.blast-fire', { opacity: '1', transform: 'scale(0.2)' },
+          { opacity: '0', transform: 'scale(1.7)' }, { duration: 1000, easing: 'ease-out' })
+        .fromTo('.blast-ring', { opacity: '1', transform: 'scale(0.2)' },
+          { opacity: '0', transform: 'scale(3)' }, { duration: 820, easing: 'ease-out' })
+        .stagger('.blast-smoke', (el, i) => ({
+          from: { opacity: '0.9', transform: 'translate(0px, 0px) scale(0.3)' },
+          to: { opacity: '0', transform: `translate(${puffs[i].x}px, ${puffs[i].y}px) scale(1.8)` },
+          duration: 1800, easing: 'ease-out',
+        }), { interval: 30 })
+        .stagger('.debris', (el, i) => ({
+          from: { opacity: '1', transform: 'translate(0px, 0px) rotate(0deg) scale(0.4)' },
+          to: { opacity: '1', transform: `translate(${flight[i].x}px, ${flight[i].y}px) rotate(${flight[i].spin}deg) scale(1)` },
+          physics: { attraction: 0.03, friction: 0.11 },
+        }), { interval: 4 }))
+      // Steps are sequential: the debris fades once every spring has settled.
+      .stagger('.debris', { to: { opacity: '0' }, duration: 380, easing: 'ease-out' }, { interval: 8 });
+
+    const callLog = $('#call-log');
+    function logCrossing(direction) {
+      const item = document.createElement('li');
+      item.innerHTML = direction === 1
+        ? `<b>▸ call fired</b> · direction <i>+1</i> · boom.play()`
+        : `▸ call fired · direction <i>-1</i> · ignored`;
+      callLog.prepend(item);
+      while (callLog.children.length > 5) callLog.lastElementChild.remove();
+    }
+
+    // Scrubbed shiver as the fuse gets short: a scroll-tied tremble that swells.
+    const shake = {
+      0: { transform: 'rotate(0deg) scale(1)' },
+      20: { transform: 'rotate(-1.5deg) scale(1.01)' },
+      40: { transform: 'rotate(2deg) scale(1.02)' },
+      60: { transform: 'rotate(-2.5deg) scale(1.03)' },
+      80: { transform: 'rotate(3deg) scale(1.05)' },
+      100: { transform: 'rotate(0deg) scale(1.08)' },
+    };
+
+    // The scrubbed half.
+    const fuseTl = timeline({ defaults: { easing: 'linear' } });
+    fuseTl
+      .tween('.fuse-rope', { 0: { strokeDashoffset: '0' }, 100: { strokeDashoffset: '100' } }, { duration: 1200 })
+      .tween('#fuse-spark', { 0: { offsetDistance: '100%' }, 100: { offsetDistance: '0%' } }, { at: 0, duration: 1200 })
+      .tween('#bomb-heat', { 0: { opacity: '0' }, 100: { opacity: '1' } }, { at: 500, duration: 700, easing: 'ease-in' })
+      .tween('#bomb-body', shake, { at: 850, duration: 350 })
+      .label('ignite')                              // names the current end: 1200ms
+      // The timeline owns what shows: past 'ignite' the bomb is gone and the
+      // blast layer is up; scroll back and both set()s un-apply.
+      .set('#bomb', { opacity: '0' }, { at: 'ignite' })
+      .set('#blast', { opacity: '1' }, { at: 'ignite' })
+      .tween('#bomb-scorch', { 0: { opacity: '0' }, 100: { opacity: '1' } }, { at: 'ignite', duration: 500, easing: 'ease-out' })
+      .call((direction) => {
+        logCrossing(direction);
+        // play() on a scene already in flight just returns its promise, so a
+        // quick re-cross would otherwise be swallowed. stop() first restarts it
+        // from its `from` frames; a backward cross just halts it, hidden.
+        boom.stop();
+        if (direction === 1) boom.play();          // forward crossings only
+      }, { at: 'ignite' });                         // once: false — re-arms every pass
+    countTimeline(fuseTl, 7);
+
+    // scrollDriver seeks non-silently by default, so scrubbing fires calls.
+    const fuseDriver = scrollDriver(fuseTl, {
+      trigger: '#fuse-track',
+      start: 'top 15%',
+      end: 'bottom 77%',
+    });
+
+    // ============================================================
     // 06 — Locked vs. smoothed
     // ============================================================
     const dial = (target) =>
@@ -2689,7 +2956,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // Layout can settle after fonts load; every driver re-measures its range.
-    const drivers = [heroDriver, cardsDriver, fuseDriver, lockedDriver, smoothDriver];
+    const drivers = [heroDriver, dominoDriver, fuseDriver, lockedDriver, smoothDriver];
     window.addEventListener('load', () => drivers.forEach((d) => d.refresh()));
   </script>
 </body>
