@@ -530,6 +530,331 @@
       background: var(--cream);
     }
 
+    /* ---- Split note ---- */
+    .split-note {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .split-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem;
+      background: rgba(0,0,0,0.22);
+    }
+    .split-card h3 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 1.25rem; color: var(--cream); margin-bottom: 0.4rem;
+    }
+    .split-card p { font-size: 1.05rem; line-height: 1.65; color: var(--text); }
+    .split-card code { font-family: 'Courier New', monospace; font-size: 1em; color: var(--teal); }
+    .split-card.trigger code { color: var(--amber); }
+
+    /* ---- Footer ---- */
+    .foot {
+      text-align: center; padding: 3rem 1.5rem 5rem;
+      color: var(--text-dim); font-size: 1rem;
+    }
+    .foot a { color: var(--teal); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.25s ease; }
+    .foot a:hover { border-color: var(--teal); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- 02 Fireworks: hover-scrubbed studio preview ---- */
+    /* The whole panel is the scrub surface — stage and strip both. Cursor X
+       across it maps to the playhead, so there's no separate "handle" to find. */
+    .studio {
+      border: 1px solid var(--border-accent);
+      border-radius: 14px;
+      background: var(--bg-card);
+      overflow: hidden;
+      cursor: ew-resize;
+      touch-action: pan-y;
+    }
+
+    .fw-sky {
+      position: relative;
+      height: 340px;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 112%, rgba(94,202,187,0.09), transparent 52%),
+        linear-gradient(180deg, #03060d 0%, #07101d 62%, #0b1720 100%);
+    }
+
+    .fw-star {
+      position: absolute;
+      width: var(--star-size); height: var(--star-size);
+      border-radius: 50%;
+      background: var(--cream);
+      box-shadow: 0 0 5px rgba(230,234,230,0.55);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .fw-cloud {
+      position: absolute;
+      width: var(--cloud-w); height: 28px;
+      border-radius: 50%;
+      background: rgba(134,181,232,0.07);
+      filter: blur(10px);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .fw-shell { position: absolute; }
+    .fw-shell > * { position: absolute; left: 0; top: 0; }
+
+    .fw-trail {
+      width: 3px; height: 48px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #fff, var(--amber) 20%, rgba(217,164,65,0));
+      box-shadow: 0 0 8px rgba(217,164,65,0.7);
+      transform-origin: center top;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    .fw-flash {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 28px 8px rgba(255,255,255,0.85), 0 0 70px 22px rgba(217,164,65,0.34);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .fw-flash.called { filter: brightness(1.7); }
+
+    /* The wrapper's rotate comes last, so --g always falls in world-space while
+       the inner spark travels out along its rotated spoke. */
+    .fw-spark {
+      width: 0; height: 0;
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+    .fw-spark i {
+      display: block;
+      width: var(--spark-size); height: var(--spark-size);
+      border-radius: 50%;
+      background: hsl(var(--hue) 92% 72%);
+      box-shadow: 0 0 8px hsl(var(--hue) 92% 65%);
+      transform: translateX(calc(var(--r) * var(--spread))) scale(var(--spark-scale));
+      will-change: transform;
+    }
+
+    /* ---- the strip ---- */
+    .studio-strip {
+      position: relative;
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 0.9rem 0.9rem;
+      background: rgba(0,0,0,0.34);
+    }
+    .strip-head {
+      display: flex; align-items: center; gap: 0.7rem;
+      margin: 0 0 0.6rem calc(var(--lane-name) + 0.6rem);
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      color: var(--text-dim);
+    }
+    .strip-time { color: var(--cream); }
+    .strip-end { margin-left: auto; }
+
+    /* Who owns the playhead right now — the whole point of the section. */
+    .owner {
+      display: inline-flex; align-items: center; gap: 0.34rem;
+      padding: 0.16rem 0.6rem;
+      border: 1px solid var(--border-accent);
+      border-radius: 999px;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--cool);
+      transition: color 0.18s, border-color 0.18s;
+    }
+    .owner.is-cursor { color: var(--teal); border-color: var(--teal-dim); }
+
+    .studio-lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 27px; }
+    .studio-lane .lane-name { font-size: 1rem; transition: color 0.15s; }
+    .studio-lane.live .lane-name { color: var(--teal); }
+    .studio-lane .lane-track { height: 9px; }
+    .studio-bar {
+      position: absolute; top: 0; bottom: 0;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+      /* Idle = the clip is only holding a fill frame. Live = it's actually
+         interpolating. Same distinction getFrames() makes internally. */
+      opacity: 0.24;
+      transition: opacity 0.14s, box-shadow 0.14s;
+    }
+    .studio-bar.live { opacity: 1; box-shadow: 0 0 12px rgba(94,202,187,0.45); }
+    .studio-bar.accent { background: linear-gradient(90deg, rgba(217,164,65,0.5), var(--amber)); }
+    .studio-bar.accent.live { box-shadow: 0 0 12px rgba(217,164,65,0.45); }
+
+    .strip-overlay {
+      position: absolute;
+      top: 2.1rem; bottom: 0.9rem;
+      left: calc(0.9rem + var(--lane-name) + 0.6rem);
+      right: 0.9rem;
+      pointer-events: none;
+    }
+    .strip-playhead {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      width: 1px; background: var(--cream);
+      box-shadow: 0 0 10px rgba(230,234,230,0.7);
+    }
+    .strip-playhead::before {
+      content: ''; position: absolute; top: -5px; left: -3.5px;
+      width: 8px; height: 8px; border-radius: 2px;
+      background: var(--cream);
+    }
+
+    /* ---- 03 Campfire: four coprime looping timelines ---- */
+    .camp-stage {
+      height: 340px;
+      background: #03060b;
+    }
+    .camp-sky {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 112%, rgba(217,164,65,0.09), transparent 45%),
+        linear-gradient(180deg, #03060c 0%, #07101a 68%, #0a1215 100%);
+    }
+    .camp-pines { position: absolute; inset: 0; }
+    .pine {
+      position: absolute;
+      bottom: 20%;
+      left: var(--pine-x);
+      width: var(--pine-w); height: var(--pine-h);
+      transform-origin: 50% 100%;
+      clip-path: polygon(50% 0%, 70% 30%, 61% 30%, 82% 60%, 69% 60%, 100% 100%, 0 100%, 31% 60%, 18% 60%, 39% 30%, 30% 30%);
+      background: var(--pine-color);
+      opacity: var(--pine-opacity);
+      will-change: transform;
+    }
+    .camp-glow {
+      position: absolute;
+      left: 50%; top: 84%;
+      width: 390px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(217,164,65,0.28), rgba(224,138,111,0.08) 42%, transparent 72%);
+      filter: blur(5px);
+      will-change: transform, opacity;
+    }
+    .camp-fire {
+      position: absolute;
+      left: 50%; bottom: 42px;
+      width: 190px; height: 220px;
+      transform: translateX(-50%);
+    }
+    .camp-logs {
+      position: absolute;
+      left: 50%; bottom: 0;
+      width: 126px; height: 30px;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+    .camp-logs i {
+      position: absolute;
+      left: 4px; top: 7px;
+      width: 118px; height: 18px;
+      border-radius: 9px;
+      background: linear-gradient(180deg, #75452f, #321d18);
+      border: 1px solid rgba(217,164,65,0.2);
+      transform: rotate(13deg);
+    }
+    .camp-logs i + i { transform: rotate(-13deg); }
+    .flame {
+      position: absolute;
+      left: 50%; bottom: 23px;
+      border-radius: 55% 45% 58% 42% / 68% 64% 36% 32%;
+      transform-origin: 50% 100%;
+      mix-blend-mode: screen;
+      will-change: transform, opacity;
+    }
+    .flame-outer {
+      width: 100px; height: 158px;
+      background: linear-gradient(0deg, rgba(217,164,65,0.88), rgba(224,138,111,0.46) 56%, transparent 100%);
+      filter: blur(2px);
+      z-index: 1;
+    }
+    .flame-mid {
+      width: 75px; height: 127px;
+      background: linear-gradient(0deg, #f2b64d, #e77a36 62%, transparent 100%);
+      z-index: 2;
+    }
+    .flame-inner {
+      width: 50px; height: 94px;
+      background: linear-gradient(0deg, #fff4c3, #f5c557 64%, transparent 100%);
+      z-index: 3;
+    }
+    .flame-core {
+      width: 28px; height: 60px;
+      background: linear-gradient(0deg, #ffffff, #ffeaa2 72%, transparent 100%);
+      filter: blur(1px);
+      z-index: 3;
+    }
+    .camp-embers {
+      position: absolute;
+      left: 50%; bottom: 48px;
+      width: 0; height: 0;
+      z-index: 5;
+    }
+    .ember {
+      position: absolute;
+      left: var(--ember-x); bottom: 0;
+      width: var(--ember-size); height: var(--ember-size);
+      border-radius: 50%;
+      background: hsl(var(--ember-hue) 96% 66%);
+      box-shadow: 0 0 8px hsl(var(--ember-hue) 96% 58%);
+      transform: translateX(var(--ember-tx)) translateY(var(--ember-ty)) scale(var(--ember-scale));
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* ---- the loop ruler ---- */
+    /* Track width is proportional to that timeline's own duration, so every
+       playhead crosses at the same pixels-per-second and only the wrap points
+       differ — the drift you see is the real drift, not a drawing trick. */
+    .loop-lane {
+      display: grid;
+      grid-template-columns: var(--lane-name) 1fr var(--loop-meta);
+      align-items: center; gap: 0 0.6rem;
+      height: 30px;
+    }
+    .loop-lane .lane-name { font-size: 1rem; }
+    .loop-track {
+      position: relative;
+      width: var(--loop-w);
+      height: 10px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.035);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .loop-fill {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      width: 0;
+      border-radius: 5px;
+      background: linear-gradient(90deg, rgba(217,164,65,0.1), rgba(217,164,65,0.5));
+    }
+    .loop-head {
+      position: absolute; top: -3px; bottom: -3px; left: 0;
+      width: 1px;
+      background: var(--amber);
+      box-shadow: 0 0 9px rgba(217,164,65,0.75);
+    }
+    .loop-head::before {
+      content: ''; position: absolute; top: -3.5px; left: -3px;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--amber);
+    }
+    .loop-meta {
+      font-family: 'Courier New', monospace; font-size: 1rem;
+      color: var(--text-dim); text-align: right; white-space: nowrap;
+    }
+    .loop-meta b { color: var(--cream-dim); font-weight: 400; }
+
     /* ---- 04 Dominoes: one staggered clip ----
        The clip animates a single number, --tip (degrees), on each .domino; the
        tile, its floor reflection and its shadow all read it. --k is 1 except on
@@ -556,6 +881,9 @@
       /* Room for the last tile lying flat, so the whole chain stays centred. */
       padding-right: calc(var(--dw) * 2);
       transform: translate(-50%, -100%);
+    }
+    @supports not (width: 1cqi) {
+      .domino-row { --dw: min(48px, 4.8vw); }
     }
     .domino {
       --tip: 0; --k: 1;
@@ -613,68 +941,6 @@
       background: radial-gradient(circle at 35% 30%, #ffffff, var(--teal) 62%, var(--teal-dim));
       box-shadow: 0 0 calc(2px + var(--tip) * 0.16px) rgba(94,202,187, calc(0.45 + var(--tip) / 110));
     }
-
-    /* ---- 06 Smoothing ---- */
-    .smooth-stage {
-      display: grid; grid-template-columns: 1fr 1fr;
-      background:
-        radial-gradient(ellipse at 50% 100%, rgba(94,202,187,0.06), transparent 55%),
-        linear-gradient(135deg, rgba(255,255,255,0.012), rgba(255,255,255,0.03));
-    }
-    .smooth-cell {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 1rem; padding: 1.25rem;
-    }
-    .smooth-cell + .smooth-cell { border-left: 1px solid var(--border); }
-    .gauge { position: relative; width: 100%; max-width: 250px; aspect-ratio: 2 / 1; }
-    .gauge-arc {
-      position: absolute; inset: 0;
-      border: 1px solid var(--border-accent);
-      border-bottom: none;
-      border-radius: 999px 999px 0 0;
-    }
-    /* Tick band: a conic of hairlines, masked to a ring near the rim. The
-       gauge is 2:1, so farthest-side from the bottom centre is the radius. */
-    .gauge-arc::before {
-      content: ''; position: absolute; inset: 0;
-      border-radius: 999px 999px 0 0;
-      background: repeating-conic-gradient(from -90deg at 50% 100%, rgba(194,204,198,0.4) 0deg 0.7deg, transparent 0.7deg 15deg);
-      -webkit-mask-image: radial-gradient(farthest-side at 50% 100%, transparent 84%, #000 85%, #000 94%, transparent 95%);
-      mask-image: radial-gradient(farthest-side at 50% 100%, transparent 84%, #000 85%, #000 94%, transparent 95%);
-    }
-    .gauge-arc::after {
-      content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
-    }
-    .needle {
-      position: absolute;
-      left: 50%; bottom: 0;
-      width: 2px; height: 84%;
-      margin-left: -1px;
-      transform-origin: bottom center;
-      transform: rotate(-62deg);
-      background: linear-gradient(180deg, var(--teal), rgba(94,202,187,0.15));
-      border-radius: 2px;
-      will-change: transform;
-    }
-    .needle.alt { background: linear-gradient(180deg, var(--amber), rgba(217,164,65,0.15)); }
-    .needle::after {
-      content: ''; position: absolute; left: 50%; top: -3px;
-      width: 6px; height: 6px; margin-left: -3px; border-radius: 50%;
-      background: var(--teal); box-shadow: 0 0 10px 2px rgba(94,202,187,0.6);
-    }
-    .needle.alt::after { background: var(--amber); box-shadow: 0 0 10px 2px rgba(217,164,65,0.6); }
-    .gauge-hub {
-      position: absolute; left: 50%; bottom: -5px;
-      width: 10px; height: 10px; margin-left: -5px;
-      border-radius: 50%; background: var(--cream);
-      box-shadow: 0 0 12px rgba(230,234,230,0.5);
-    }
-    .smooth-cap { text-align: center; }
-    .smooth-cap .t { font-family: var(--font-display); font-size: 1.45rem; color: var(--cream); display: block; }
-    .smooth-cap .s { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--text-dim); }
-    .smooth-val { font-family: 'Courier New', monospace; font-size: 1.35rem; color: var(--teal); }
-    .smooth-val.alt { color: var(--amber); }
 
     /* ---- 05 call(): a fuse on a bomb ----
        The rig is fixed-size px so the SVG fuse, the spark's offset-path and
@@ -831,330 +1097,67 @@
     .call-log li b { color: var(--amber); font-weight: 400; }
     .call-log li i { color: var(--cool); font-style: normal; }
 
-    /* ---- Split note ---- */
-    .split-note {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 1.5rem 2rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    .split-card {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.4rem 1.5rem;
-      background: rgba(0,0,0,0.22);
-    }
-    .split-card h3 {
-      font-family: var(--font-display); font-weight: 400;
-      font-size: 1.25rem; color: var(--cream); margin-bottom: 0.4rem;
-    }
-    .split-card p { font-size: 1.05rem; line-height: 1.65; color: var(--text); }
-    .split-card code { font-family: 'Courier New', monospace; font-size: 1em; color: var(--teal); }
-    .split-card.trigger code { color: var(--amber); }
-
-    /* ---- Footer ---- */
-    .foot {
-      text-align: center; padding: 3rem 1.5rem 5rem;
-      color: var(--text-dim); font-size: 1rem;
-    }
-    .foot a { color: var(--teal); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.25s ease; }
-    .foot a:hover { border-color: var(--teal); }
-
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* ---- 02 Fireworks: hover-scrubbed studio preview ---- */
-    /* The whole panel is the scrub surface — stage and strip both. Cursor X
-       across it maps to the playhead, so there's no separate "handle" to find. */
-    .studio {
-      border: 1px solid var(--border-accent);
-      border-radius: 14px;
-      background: var(--bg-card);
-      overflow: hidden;
-      cursor: ew-resize;
-      touch-action: pan-y;
-    }
-
-    .fw-sky {
-      position: relative;
-      height: 340px;
-      overflow: hidden;
+    /* ---- 06 Smoothing ---- */
+    .smooth-stage {
+      display: grid; grid-template-columns: 1fr 1fr;
       background:
-        radial-gradient(ellipse at 50% 112%, rgba(94,202,187,0.09), transparent 52%),
-        linear-gradient(180deg, #03060d 0%, #07101d 62%, #0b1720 100%);
+        radial-gradient(ellipse at 50% 100%, rgba(94,202,187,0.06), transparent 55%),
+        linear-gradient(135deg, rgba(255,255,255,0.012), rgba(255,255,255,0.03));
     }
-
-    .fw-star {
-      position: absolute;
-      width: var(--star-size); height: var(--star-size);
-      border-radius: 50%;
-      background: var(--cream);
-      box-shadow: 0 0 5px rgba(230,234,230,0.55);
-      opacity: 0;
-      will-change: transform, opacity;
+    .smooth-cell {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1rem; padding: 1.25rem;
     }
-
-    .fw-cloud {
-      position: absolute;
-      width: var(--cloud-w); height: 28px;
-      border-radius: 50%;
-      background: rgba(134,181,232,0.07);
-      filter: blur(10px);
-      opacity: 0;
-      will-change: transform, opacity;
-    }
-
-    .fw-shell { position: absolute; }
-    .fw-shell > * { position: absolute; left: 0; top: 0; }
-
-    .fw-trail {
-      width: 3px; height: 48px;
-      border-radius: 3px;
-      background: linear-gradient(180deg, #fff, var(--amber) 20%, rgba(217,164,65,0));
-      box-shadow: 0 0 8px rgba(217,164,65,0.7);
-      transform-origin: center top;
-      opacity: 0;
-      will-change: transform, opacity;
-    }
-
-    .fw-flash {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 0 28px 8px rgba(255,255,255,0.85), 0 0 70px 22px rgba(217,164,65,0.34);
-      opacity: 0;
-      will-change: transform, opacity;
-    }
-    .fw-flash.called { filter: brightness(1.7); }
-
-    /* The wrapper's rotate comes last, so --g always falls in world-space while
-       the inner spark travels out along its rotated spoke. */
-    .fw-spark {
-      width: 0; height: 0;
-      opacity: 0;
-      will-change: transform, opacity;
-    }
-    .fw-spark i {
-      display: block;
-      width: var(--spark-size); height: var(--spark-size);
-      border-radius: 50%;
-      background: hsl(var(--hue) 92% 72%);
-      box-shadow: 0 0 8px hsl(var(--hue) 92% 65%);
-      transform: translateX(calc(var(--r) * var(--spread))) scale(var(--spark-scale));
-      will-change: transform;
-    }
-
-    /* ---- 03 Campfire: four coprime looping timelines ---- */
-    .camp-stage {
-      height: 340px;
-      background: #03060b;
-    }
-    .camp-sky {
+    .smooth-cell + .smooth-cell { border-left: 1px solid var(--border); }
+    .gauge { position: relative; width: 100%; max-width: 250px; aspect-ratio: 2 / 1; }
+    .gauge-arc {
       position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse at 50% 112%, rgba(217,164,65,0.09), transparent 45%),
-        linear-gradient(180deg, #03060c 0%, #07101a 68%, #0a1215 100%);
+      border: 1px solid var(--border-accent);
+      border-bottom: none;
+      border-radius: 999px 999px 0 0;
     }
-    .camp-pines { position: absolute; inset: 0; }
-    .pine {
-      position: absolute;
-      bottom: 20%;
-      left: var(--pine-x);
-      width: var(--pine-w); height: var(--pine-h);
-      transform-origin: 50% 100%;
-      clip-path: polygon(50% 0%, 70% 30%, 61% 30%, 82% 60%, 69% 60%, 100% 100%, 0 100%, 31% 60%, 18% 60%, 39% 30%, 30% 30%);
-      background: var(--pine-color);
-      opacity: var(--pine-opacity);
-      will-change: transform;
+    /* Tick band: a conic of hairlines, masked to a ring near the rim. The
+       gauge is 2:1, so farthest-side from the bottom centre is the radius. */
+    .gauge-arc::before {
+      content: ''; position: absolute; inset: 0;
+      border-radius: 999px 999px 0 0;
+      background: repeating-conic-gradient(from -90deg at 50% 100%, rgba(194,204,198,0.4) 0deg 0.7deg, transparent 0.7deg 15deg);
+      -webkit-mask-image: radial-gradient(farthest-side at 50% 100%, transparent 84%, #000 85%, #000 94%, transparent 95%);
+      mask-image: radial-gradient(farthest-side at 50% 100%, transparent 84%, #000 85%, #000 94%, transparent 95%);
     }
-    .camp-glow {
-      position: absolute;
-      left: 50%; top: 84%;
-      width: 390px; height: 120px;
-      border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(217,164,65,0.28), rgba(224,138,111,0.08) 42%, transparent 72%);
-      filter: blur(5px);
-      will-change: transform, opacity;
+    .gauge-arc::after {
+      content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-accent), transparent);
     }
-    .camp-fire {
-      position: absolute;
-      left: 50%; bottom: 42px;
-      width: 190px; height: 220px;
-      transform: translateX(-50%);
-    }
-    .camp-logs {
+    .needle {
       position: absolute;
       left: 50%; bottom: 0;
-      width: 126px; height: 30px;
-      transform: translateX(-50%);
-      z-index: 4;
+      width: 2px; height: 84%;
+      margin-left: -1px;
+      transform-origin: bottom center;
+      transform: rotate(-62deg);
+      background: linear-gradient(180deg, var(--teal), rgba(94,202,187,0.15));
+      border-radius: 2px;
+      will-change: transform;
     }
-    .camp-logs i {
-      position: absolute;
-      left: 4px; top: 7px;
-      width: 118px; height: 18px;
-      border-radius: 9px;
-      background: linear-gradient(180deg, #75452f, #321d18);
-      border: 1px solid rgba(217,164,65,0.2);
-      transform: rotate(13deg);
+    .needle.alt { background: linear-gradient(180deg, var(--amber), rgba(217,164,65,0.15)); }
+    .needle::after {
+      content: ''; position: absolute; left: 50%; top: -3px;
+      width: 6px; height: 6px; margin-left: -3px; border-radius: 50%;
+      background: var(--teal); box-shadow: 0 0 10px 2px rgba(94,202,187,0.6);
     }
-    .camp-logs i + i { transform: rotate(-13deg); }
-    .flame {
-      position: absolute;
-      left: 50%; bottom: 23px;
-      border-radius: 55% 45% 58% 42% / 68% 64% 36% 32%;
-      transform-origin: 50% 100%;
-      mix-blend-mode: screen;
-      will-change: transform, opacity;
+    .needle.alt::after { background: var(--amber); box-shadow: 0 0 10px 2px rgba(217,164,65,0.6); }
+    .gauge-hub {
+      position: absolute; left: 50%; bottom: -5px;
+      width: 10px; height: 10px; margin-left: -5px;
+      border-radius: 50%; background: var(--cream);
+      box-shadow: 0 0 12px rgba(230,234,230,0.5);
     }
-    .flame-outer {
-      width: 100px; height: 158px;
-      background: linear-gradient(0deg, rgba(217,164,65,0.88), rgba(224,138,111,0.46) 56%, transparent 100%);
-      filter: blur(2px);
-      z-index: 1;
-    }
-    .flame-mid {
-      width: 75px; height: 127px;
-      background: linear-gradient(0deg, #f2b64d, #e77a36 62%, transparent 100%);
-      z-index: 2;
-    }
-    .flame-inner {
-      width: 50px; height: 94px;
-      background: linear-gradient(0deg, #fff4c3, #f5c557 64%, transparent 100%);
-      z-index: 3;
-    }
-    .flame-core {
-      width: 28px; height: 60px;
-      background: linear-gradient(0deg, #ffffff, #ffeaa2 72%, transparent 100%);
-      filter: blur(1px);
-      z-index: 3;
-    }
-    .camp-embers {
-      position: absolute;
-      left: 50%; bottom: 48px;
-      width: 0; height: 0;
-      z-index: 5;
-    }
-    .ember {
-      position: absolute;
-      left: var(--ember-x); bottom: 0;
-      width: var(--ember-size); height: var(--ember-size);
-      border-radius: 50%;
-      background: hsl(var(--ember-hue) 96% 66%);
-      box-shadow: 0 0 8px hsl(var(--ember-hue) 96% 58%);
-      transform: translateX(var(--ember-tx)) translateY(var(--ember-ty)) scale(var(--ember-scale));
-      opacity: 0;
-      will-change: transform, opacity;
-    }
-
-    /* ---- the loop ruler ---- */
-    /* Track width is proportional to that timeline's own duration, so every
-       playhead crosses at the same pixels-per-second and only the wrap points
-       differ — the drift you see is the real drift, not a drawing trick. */
-    .loop-lane {
-      display: grid;
-      grid-template-columns: var(--lane-name) 1fr var(--loop-meta);
-      align-items: center; gap: 0 0.6rem;
-      height: 30px;
-    }
-    .loop-lane .lane-name { font-size: 1rem; }
-    .loop-track {
-      position: relative;
-      width: var(--loop-w);
-      height: 10px;
-      border-radius: 5px;
-      background: rgba(255,255,255,0.035);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
-    }
-    .loop-fill {
-      position: absolute; top: 0; bottom: 0; left: 0;
-      width: 0;
-      border-radius: 5px;
-      background: linear-gradient(90deg, rgba(217,164,65,0.1), rgba(217,164,65,0.5));
-    }
-    .loop-head {
-      position: absolute; top: -3px; bottom: -3px; left: 0;
-      width: 1px;
-      background: var(--amber);
-      box-shadow: 0 0 9px rgba(217,164,65,0.75);
-    }
-    .loop-head::before {
-      content: ''; position: absolute; top: -3.5px; left: -3px;
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--amber);
-    }
-    .loop-meta {
-      font-family: 'Courier New', monospace; font-size: 1rem;
-      color: var(--text-dim); text-align: right; white-space: nowrap;
-    }
-    .loop-meta b { color: var(--cream-dim); font-weight: 400; }
-
-    /* ---- the strip ---- */
-    .studio-strip {
-      position: relative;
-      border-top: 1px solid var(--border);
-      padding: 0.75rem 0.9rem 0.9rem;
-      background: rgba(0,0,0,0.34);
-    }
-    .strip-head {
-      display: flex; align-items: center; gap: 0.7rem;
-      margin: 0 0 0.6rem calc(var(--lane-name) + 0.6rem);
-      font-family: 'Courier New', monospace;
-      font-size: 1rem;
-      color: var(--text-dim);
-    }
-    .strip-time { color: var(--cream); }
-    .strip-end { margin-left: auto; }
-
-    /* Who owns the playhead right now — the whole point of the section. */
-    .owner {
-      display: inline-flex; align-items: center; gap: 0.34rem;
-      padding: 0.16rem 0.6rem;
-      border: 1px solid var(--border-accent);
-      border-radius: 999px;
-      font-size: 1rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--cool);
-      transition: color 0.18s, border-color 0.18s;
-    }
-    .owner.is-cursor { color: var(--teal); border-color: var(--teal-dim); }
-
-    .studio-lane { display: grid; grid-template-columns: var(--lane-name) 1fr; align-items: center; gap: 0 0.6rem; height: 27px; }
-    .studio-lane .lane-name { font-size: 1rem; transition: color 0.15s; }
-    .studio-lane.live .lane-name { color: var(--teal); }
-    .studio-lane .lane-track { height: 9px; }
-    .studio-bar {
-      position: absolute; top: 0; bottom: 0;
-      border-radius: 4px;
-      background: linear-gradient(90deg, var(--teal-dim), var(--teal));
-      /* Idle = the clip is only holding a fill frame. Live = it's actually
-         interpolating. Same distinction getFrames() makes internally. */
-      opacity: 0.24;
-      transition: opacity 0.14s, box-shadow 0.14s;
-    }
-    .studio-bar.live { opacity: 1; box-shadow: 0 0 12px rgba(94,202,187,0.45); }
-    .studio-bar.accent { background: linear-gradient(90deg, rgba(217,164,65,0.5), var(--amber)); }
-    .studio-bar.accent.live { box-shadow: 0 0 12px rgba(217,164,65,0.45); }
-
-    .strip-overlay {
-      position: absolute;
-      top: 2.1rem; bottom: 0.9rem;
-      left: calc(0.9rem + var(--lane-name) + 0.6rem);
-      right: 0.9rem;
-      pointer-events: none;
-    }
-    .strip-playhead {
-      position: absolute; top: 0; bottom: 0; left: 0;
-      width: 1px; background: var(--cream);
-      box-shadow: 0 0 10px rgba(230,234,230,0.7);
-    }
-    .strip-playhead::before {
-      content: ''; position: absolute; top: -5px; left: -3.5px;
-      width: 8px; height: 8px; border-radius: 2px;
-      background: var(--cream);
-    }
+    .smooth-cap { text-align: center; }
+    .smooth-cap .t { font-family: var(--font-display); font-size: 1.45rem; color: var(--cream); display: block; }
+    .smooth-cap .s { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--text-dim); }
+    .smooth-val { font-family: 'Courier New', monospace; font-size: 1.35rem; color: var(--teal); }
+    .smooth-val.alt { color: var(--amber); }
 
     /* ---- 07 View trigger ---- */
     .pop-stage {
@@ -1762,7 +1765,12 @@ dominoTl.<span class="fn">tween</span>(<span class="str">'.domino'</span>, domin
 
       <details class="code-aside">
         <summary>view the timeline() + call()</summary>
-        <pre><code><span class="cm">// The physics half: one blast scene, built once, replayed on every crossing.</span>
+        <pre><code><span class="cm">// One path string feeds the SVG fuse and the spark's offset-path.</span>
+<span class="kw">const</span> FUSE_D = <span class="str">'M257 118 C 282 84, 266 46, 226 50 S 162 92, 118 70 S 66 10, 30 38'</span>;
+$$(<span class="str">'.fuse-path'</span>).<span class="fn">forEach</span>((path) =&gt; path.<span class="fn">setAttribute</span>(<span class="str">'d'</span>, FUSE_D));
+$(<span class="str">'#fuse-spark'</span>).style.offsetPath = <span class="str">`path('${FUSE_D}')`</span>;
+
+<span class="cm">// The physics half: one blast scene, built once, replayed on every crossing.</span>
 <span class="cm">// (Springs are opt-in — registerPhysics(PhysicsEngine) ran once at page setup.)</span>
 <span class="cm">// puffs[i] and flight[i] are seeded per element when the markup is built.</span>
 <span class="kw">const</span> boom = <span class="fn">scene</span>()
@@ -1786,6 +1794,16 @@ dominoTl.<span class="fn">tween</span>(<span class="str">'.domino'</span>, domin
     }), { <span class="prop">interval</span>: <span class="num">4</span> }))
   <span class="cm">// Steps are sequential: the debris fades once every spring has settled.</span>
   .<span class="fn">stagger</span>(<span class="str">'.debris'</span>, { <span class="prop">to</span>: { <span class="prop">opacity</span>: <span class="str">'0'</span> }, <span class="prop">duration</span>: <span class="num">380</span>, <span class="prop">easing</span>: <span class="str">'ease-out'</span> }, { <span class="prop">interval</span>: <span class="num">8</span> });
+
+<span class="cm">// Scrubbed shiver as the fuse gets short.</span>
+<span class="kw">const</span> shake = {
+  <span class="num">0</span>:   { <span class="prop">transform</span>: <span class="str">'rotate(0deg) scale(1)'</span> },
+  <span class="num">20</span>:  { <span class="prop">transform</span>: <span class="str">'rotate(-1.5deg) scale(1.01)'</span> },
+  <span class="num">40</span>:  { <span class="prop">transform</span>: <span class="str">'rotate(2deg) scale(1.02)'</span> },
+  <span class="num">60</span>:  { <span class="prop">transform</span>: <span class="str">'rotate(-2.5deg) scale(1.03)'</span> },
+  <span class="num">80</span>:  { <span class="prop">transform</span>: <span class="str">'rotate(3deg) scale(1.05)'</span> },
+  <span class="num">100</span>: { <span class="prop">transform</span>: <span class="str">'rotate(0deg) scale(1.08)'</span> },
+};
 
 <span class="cm">// The scrubbed half. The rope is pathLength="100", so a dashoffset of 100 is</span>
 <span class="cm">// a fully burnt fuse; the spark's offset-path is the same path string.</span>
@@ -2096,7 +2114,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     }
 
     // ============================================================
-    // 01 — Clips at offset start times (scroll-scrubbed, default range)
+    // 01 — Clips on one timeline (scroll-scrubbed)
     // ============================================================
     // Deterministic starfield: a tiny LCG rather than Math.random, so the sky is
     // laid out identically on every load. These are static CSS positions — only
@@ -2244,7 +2262,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     heroRuler.addEventListener('pointercancel', heroSnapBack);
 
     // ============================================================
-    // 02 — Your cursor is the playhead (hover-scrubbed studio preview)
+    // 02 — Scrub with your cursor (hover-scrubbed fireworks)
     // ============================================================
 
     // Static sky and particle variation use the same seeded LCG pattern as the
@@ -2502,7 +2520,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 03 — A timeline that never ends (four coprime loops)
+    // 03 — Looping timelines (four coprime loops)
     // ============================================================
     // Static variation is seeded and stored in CSS custom properties. Every
     // element in a clip shares one FrameEngine, so per-element randomness does
@@ -2656,7 +2674,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     viewTrigger('#sec-fire', { enter: playFire, leave: pauseFire });
 
     // ============================================================
-    // 04 — One clip, nine start times (stagger → a domino chain)
+    // 04 — Stagger (a domino chain)
     // ============================================================
     // Classic faces, climbing pip counts. The floor reflection is a clone of
     // the tile that reads the same --tip, so one clip moves both.
@@ -2717,7 +2735,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 05 — A scene fired from a timeline position (call → a bomb)
+    // 05 — Trigger an animation at a time (call → a bomb)
     // ============================================================
     // One path string feeds the SVG fuse and the spark's offset-path, so the
     // burning tip can't drift off the rope. Coordinates are the rig's px.
@@ -2858,7 +2876,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     smoothTl.on('update', () => { smoothOut.textContent = smoothTl.progress().toFixed(3); });
 
     // ============================================================
-    // 07 — Triggered, not scrubbed (viewTrigger → physics scene)
+    // 07 — Play when scrolled into view (viewTrigger → physics scene)
     // ============================================================
     const popDot = $('#pop-dot');
     const popStatus = $('#pop-status');
@@ -2889,7 +2907,7 @@ $$(<span class="str">'[data-rate]'</span>).<span class="fn">forEach</span>((btn)
     });
 
     // ============================================================
-    // 08 — The same timeline, on a clock
+    // 08 — Play on a clock
     // ============================================================
     const beatStage = $('#beat-stage');
     for (let i = 0; i < 14; i += 1) {
