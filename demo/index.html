@@ -1303,8 +1303,8 @@
       <span class="line1">Timeline</span><br />
       <span class="line2">Engine</span>
     </h1>
-    <p>A bunch of frame engines with <em>offset start times</em>. The whole timeline is a pure function of time, so anything can own the playhead — the clock, a scrub position, or the scroll bar.</p>
-    <p>The scrubbed path is bezier and easings only: a spring has no closed-form position-at-time, so it can't be sampled at an arbitrary playhead. <em>Physics lives on the trigger path</em> — fire an animation-engine scene from a timeline position or from the viewport and it plays forward in real time.</p>
+    <p>Animations on one timeline. Drive it with the clock, a slider or the scroll bar.</p>
+    <p>Springs can't be scrubbed, so they <em>play in real time</em> when triggered.</p>
     <div class="scroll-hint">Scroll to scrub</div>
   </header>
 
@@ -1337,11 +1337,11 @@
   <div class="split-note">
     <div class="split-card">
       <h3>Scrub</h3>
-      <p>Deterministic clips — <code>tween()</code>, <code>fromTo()</code>, <code>set()</code> — sampled at any millisecond by <code>seek()</code>, <code>progress()</code> or a <code>scrollDriver</code>. Same time in, same frame out, forwards or backwards.</p>
+      <p>Jump to any point in time with <code>seek()</code>, <code>progress()</code> or <code>scrollDriver</code>.</p>
     </div>
     <div class="split-card trigger">
       <h3>Trigger</h3>
-      <p>Springs, staggers and async chains from <code>@magic-spells/animation-engine</code>, started by <code>tl.call()</code> at a timeline position or by <code>viewTrigger()</code> when a section arrives. They play forward, in real time.</p>
+      <p>Play springs in real time with <code>tl.call()</code> or <code>viewTrigger()</code>.</p>
     </div>
   </div>
 
@@ -1351,9 +1351,9 @@
     <!-- ---- 01 Hero: offset clips on one axis ---- -->
     <section class="demo-section" id="sec-hero">
       <div class="demo-header">
-        <h2>Clips at offset start times</h2>
+        <h2>Clips on one timeline</h2>
       </div>
-      <p class="demo-desc">A star, three orbits, a comet and a staggered sky — seven clips on one time axis, each with its own <em>at</em> and <em>duration</em>, deliberately overlapping. A <code>scrollDriver</code> maps this stage's trip through the viewport onto the playhead, so scrolling is scrubbing: run it backwards and the planets orbit backwards. The ruler underneath is drawn from the very same clip list; the white line is the live playhead — hover or drag it to scrub by hand, and when you let go it snaps back to wherever the scroll left it.</p>
+      <p class="demo-desc">Seven clips with their own start times. Scroll to move the playhead, or drag the bars.</p>
 
       <div class="scrub-track" id="hero-track">
         <div class="stage scrub-stage hero-stage" id="hero-stage">
@@ -1362,7 +1362,7 @@
           <div class="orbit orbit-2" id="orbit-2"><i class="planet"></i></div>
           <div class="orbit orbit-3" id="orbit-3"><i class="planet"></i></div>
           <div class="hero-comet" id="hero-comet"></div>
-          <h3 class="hero-headline" id="hero-headline">one axis, <i>many starts</i></h3>
+          <h3 class="hero-headline" id="hero-headline">seven clips, <i>one timeline</i></h3>
         </div>
       </div>
 
@@ -1468,9 +1468,9 @@ heroRuler.<span class="fn">addEventListener</span>(<span class="str">'pointerlea
     <!-- ---- 02 Fireworks studio ---- -->
     <section class="demo-section" id="sec-studio">
       <div class="demo-header">
-        <h2>Your cursor is the playhead</h2>
+        <h2>Scrub with your cursor</h2>
       </div>
-      <p class="demo-desc">No scroll and no physics here — cursor X <em>is</em> the playhead, so sweep backwards and every firework implodes while its mortar drops back to earth. The strip below is drawn from the same clip list that built the timeline, lit where a clip is actually interpolating and dimmed where it's only holding a fill frame. Pull the cursor away and <code>play()</code> picks it up from exactly where you left it.</p>
+      <p class="demo-desc">Move your cursor across the panel to move the playhead.</p>
 
       <div class="studio" id="studio">
         <div class="fw-sky" id="fw-sky"></div>
@@ -1574,9 +1574,9 @@ sigilTl.<span class="fn">progress</span>(<span class="num">0</span>);   <span cl
     <!-- ---- 03 Looping timelines ---- -->
     <section class="demo-section" id="sec-fire">
       <div class="demo-header">
-        <h2>A timeline that never ends</h2>
+        <h2>Looping timelines</h2>
       </div>
-      <p class="demo-desc">A single loop eventually gives itself away. This fire is four <code>loop: true</code> timelines on the shared ticker — flames at 1700ms, embers at 2300ms, pines at 5300ms and glow at 1300ms. Their coprime rhythms only realign after roughly 7.5 hours, so the composite never visibly repeats. The lanes underneath draw all four to one shared scale — same pixels per second, different wrap points — so you can watch them slide out of phase. Leaving the viewport pauses all four; returning resumes them from their own playheads.</p>
+      <p class="demo-desc">Four loops of different lengths, so the fire never looks like it repeats.</p>
 
       <div class="stage camp-stage" id="camp-stage">
         <div class="camp-sky"></div>
@@ -1666,9 +1666,9 @@ fireTimelines.<span class="fn">forEach</span>((tl) =&gt; tl.<span class="fn">pro
     <!-- ---- 04 Stagger ---- -->
     <section class="demo-section" id="sec-stagger">
       <div class="demo-header">
-        <h2>One clip, nine start times</h2>
+        <h2>Stagger</h2>
       </div>
-      <p class="demo-desc">A single <code>tween()</code> over nine dominoes with <em>stagger: 300</em>: the same keyframes on every tile, each window offset by <em>index × 300ms</em> — exactly how long a tile takes to reach the next one. The keyframes aren't hand-drawn; they're sampled from the contact geometry, so every tile slows as it shoves its neighbour and comes to rest on its face. It's scrubbed, so scroll back up and the chain stands itself back up.</p>
+      <p class="demo-desc">One <code>tween()</code> on nine dominoes, each starting 300ms after the last.</p>
 
       <div class="scrub-track pinned" id="stagger-track">
         <div class="scrub-sticky">
@@ -1726,9 +1726,9 @@ dominoTl.<span class="fn">tween</span>(<span class="str">'.domino'</span>, domin
     <!-- ---- 05 call() ---- -->
     <section class="demo-section" id="sec-call">
       <div class="demo-header">
-        <h2>A scene fired from a timeline position</h2>
+        <h2>Trigger an animation at a time</h2>
       </div>
-      <p class="demo-desc">The fuse is scrubbed; the explosion is not. <code>tl.call()</code> registers a callback at a labelled time — <em>'ignite'</em>, where the fuse meets the bomb — and fires it whenever the playhead crosses it, scrubbing included. Direction <em>+1</em> plays a spring-driven blast scene; <em>-1</em> is logged and ignored. The bomb itself belongs to the timeline, so scroll back up and it's whole again, fuse and all.</p>
+      <p class="demo-desc">Scroll to burn the fuse. At <em>'ignite'</em>, <code>tl.call()</code> plays the explosion.</p>
 
       <div class="scrub-track pinned" id="fuse-track">
         <div class="scrub-sticky">
@@ -1818,7 +1818,7 @@ fuseTl
       <div class="demo-header">
         <h2>Locked vs. smoothed</h2>
       </div>
-      <p class="demo-desc">Two identical timelines, one scroll range, two drivers. The left needle is welded to the scroll position; the right one lerps toward it with <em>smoothing: 150</em> — a time constant in milliseconds, so it closes ~63% of the gap every 150ms regardless of frame rate. Flick the page and watch the amber needle trail the teal one, then settle. Smoothing rides the shared ticker and unsubscribes the moment it catches up.</p>
+      <p class="demo-desc">The left needle follows the scroll. The right one eases after it.</p>
 
       <div class="scrub-track pinned" id="smooth-track">
         <div class="scrub-sticky">
@@ -1883,9 +1883,9 @@ smoothTl.<span class="fn">on</span>(<span class="str">'update'</span>, () =&gt; 
     <!-- ---- 07 viewTrigger + physics ---- -->
     <section class="demo-section" id="sec-pop">
       <div class="demo-header">
-        <h2>Triggered, not scrubbed</h2>
+        <h2>Play when scrolled into view</h2>
       </div>
-      <p class="demo-desc">Nothing here is on a playhead. <code>viewTrigger</code> is an IntersectionObserver wrapper: when the stage enters the viewport it plays an <em>animation-engine</em> scene — springs, one per bubble, each with its own friction, settling on their own schedule. That's precisely what a scrubbed clip can't express: a spring has no position-at-time to sample. <em>once: true</em> disconnects the observer after the first entry, so the button below is the only encore.</p>
+      <p class="demo-desc"><code>viewTrigger()</code> plays a spring scene when the bubbles scroll into view.</p>
 
       <div class="stage pop-stage" id="pop-stage">
         <i class="pop-bubble"></i>
@@ -1938,9 +1938,9 @@ $(<span class="str">'#pop-replay'</span>).<span class="fn">addEventListener</spa
     <!-- ---- 08 Timed playback ---- -->
     <section class="demo-section" id="sec-play">
       <div class="demo-header">
-        <h2>The same timeline, on a clock</h2>
+        <h2>Play on a clock</h2>
       </div>
-      <p class="demo-desc">Nothing about a timeline assumes scroll. <code>play()</code> rides animation-engine's shared ticker and returns a promise that resolves on completion or pause; <code>timeScale()</code> composes with the ticker's own. Drag the slider and the very same clips are driven by <code>progress(p)</code> instead — the playhead doesn't care who is moving it.</p>
+      <p class="demo-desc"><code>play()</code> runs the timeline on its own. The slider moves it by hand.</p>
 
       <div class="stage beat-stage" id="beat-stage">
       </div>
